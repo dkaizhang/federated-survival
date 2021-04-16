@@ -1,0 +1,7 @@
+*.pdf
+*.xlsx
+flenv/
+Data/
+.DS_Store
+.ipynb_checkpoints/
+.vscode/
