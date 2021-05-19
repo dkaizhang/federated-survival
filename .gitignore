@@ -7,3 +7,4 @@ Data/
 .vscode/
 *.pt
 scratch.ipynb
+__pycache__/
