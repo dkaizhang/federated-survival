@@ -23,8 +23,9 @@ def get_cumulative(table, groupby, date, name, key=None):
     df = pd.concat([df, temp['temp1']], axis=1)
 
     # counts duplicates 
-    temp = df.groupby(groupby+[date]).size().reset_index(name='temp2')
-    df = pd.merge(df, temp, on=groupby+[date])
+    # dropna=False AND left join to keep all nans in the left table
+    temp = df.groupby(groupby+[date], dropna=False).size().reset_index(name='temp2')
+    df = pd.merge(df, temp, on=groupby+[date], how='left')
 
     # take max of duplicate and normal cumulative count 
     df[name] = df[['temp1', 'temp2']].max(axis=1)
