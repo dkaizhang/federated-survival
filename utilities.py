@@ -18,14 +18,18 @@ def get_cumulative(table, groupby, date, name, key=None):
             key = [key]
     temp = df.drop_duplicates(key)[groupby + [date]]
 
-    # normal cumulative count hence disregards other values that should share position
-    # temp['temp1'] = temp.sort_values(by=date, ascending=True).groupby(groupby).cumcount() + 1 
-    # df = pd.concat([df, temp['temp1']], axis=1)
-
-    # counts duplicates 
+    # counts number of records having the same values in groupby + [date]
+    # drop records without date
+    # sort by date 
+    # group by groupby
+    # then cumulatively sum   
     # dropna=False AND left join to keep all nans in the left table
     temp = temp.groupby(groupby+[date], dropna=False).size().reset_index(name='no_of_records')
-    temp[name] = temp.dropna(subset=[date]).sort_values(by=date, ascending=True).groupby(groupby).cumsum()
+    print(temp.dropna(subset=[date]).sort_values(by=date, ascending=True))
+    print(temp.dropna(subset=[date]).sort_values(by=date, ascending=True).groupby(groupby).apply(print))
+
+    temp[name] = temp.dropna(subset=[date]).sort_values(by=date, ascending=True).groupby(groupby)['no_of_records'].cumsum()
+
     df = pd.merge(df, temp, on=groupby+[date], how='left')
 
     # take max of duplicate and normal cumulative count 
