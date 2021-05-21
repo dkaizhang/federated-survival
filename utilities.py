@@ -22,24 +22,19 @@ def get_cumulative(table, groupby, date, name, key=None):
     # drop records without date
     # sort by date 
     # group by groupby
-    # then cumulatively sum   
+    # then cumulatively sum over number of records
     # dropna=False AND left join to keep all nans in the left table
     temp = temp.groupby(groupby+[date], dropna=False).size().reset_index(name='no_of_records')
-    print(temp.dropna(subset=[date]).sort_values(by=date, ascending=True))
-    print(temp.dropna(subset=[date]).sort_values(by=date, ascending=True).groupby(groupby).apply(print))
-
     temp[name] = temp.dropna(subset=[date]).sort_values(by=date, ascending=True).groupby(groupby)['no_of_records'].cumsum()
 
     df = pd.merge(df, temp, on=groupby+[date], how='left')
 
-    # take max of duplicate and normal cumulative count 
-    # df[name] = df[['temp1', 'temp2']].max(axis=1)
-
-    # df = df.drop(columns=['no_of_records'])
+    df = df.drop(columns=['no_of_records'])
 
     end = df.shape[0]
     print("lost: ", start - end)
     return df
+
 
 def get_indicator(table, target, groupby, date, name, key=None):
 
