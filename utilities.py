@@ -48,20 +48,16 @@ def get_indicator(table, target, groupby, date, name, key=None):
     if key is not None:
         if type(key) is not list:
             key = [key]
-        df = df.drop_duplicates(key)
+    temp = df.drop_duplicates(key)[groupby + [date, target]]
+    temp['temp1'] = temp[target].astype(float)
 
-    # normal cumulative sum hence disregards other values that should share position
-    df['temp1'] = df.sort_values(by=date, ascending=True).groupby(groupby)[target].cumsum()
-    
-    # counts positives 
-    temp = df.loc[df.temp1 > 0].groupby(groupby+[date]).size().reset_index(name='temp2')
+    temp['cum'] = temp.sort_values(by=date, ascending=True).groupby(groupby)['temp1'].cumsum()
+    # temp = temp.drop(columns=target)
+    temp[name] = temp.dropna(subset=[date])['cum'] > 0
 
-    df = pd.merge(df, temp, on=groupby+[date], how='left')
-    
-    # take max of duplicate and normal cumulative count 
-    df[name] = df[['temp1', 'temp2']].max(axis=1) > 0
-    
-    df = df.drop(columns=['temp1', 'temp2'])
+    df = pd.merge(df, temp, on=groupby+[date,target], how='left')
+        
+    # df = df.drop(columns=['temp1'])
 
     end = df.shape[0]
     print("lost: ", start - end)

@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from utilities import get_cumulative
+from utilities import get_cumulative, get_indicator
 
 @pytest.fixture
 def simple_df():
@@ -11,6 +11,15 @@ def simple_df():
 @pytest.fixture
 def nan_df():
     return pd.DataFrame([['0001','tum1','1','11'], ['0001','tum2','2','11'], ['0001','tum3', '2',np.nan],['0002','tum4','1',np.nan],['0002','tum5','3','13']], columns=['PATIENTID','TUMOURID','DATE','REGDATE'])
+
+@pytest.fixture
+def bool_df():
+    return pd.DataFrame([['0001','tum1','1',False], ['0001','tum2','2',True], ['0001','tum3', '2',False],['0001','tum4','3',False],['0002','tum5','3',True]], columns=['PATIENTID','TUMOURID','DATE','BOOL'])
+
+@pytest.fixture
+def nan_bool_df():
+    return pd.DataFrame([['0001','tum1','1',False], ['0001','tum2','2',True], ['0001','tum3', np.nan,np.nan],['0001','tum4','3',False],['0002','tum5','3',True]], columns=['PATIENTID','TUMOURID','DATE','BOOL'])
+
 
 def test_cumulative_handles_same_date(simple_df):
 
@@ -26,3 +35,15 @@ def test_cumulative_handles_nans(nan_df):
     expected = pd.DataFrame([[2],[2],[np.nan],[np.nan],[1]], columns=['OUTPUT'])
     print(nan_df)
     assert(nan_df['OUTPUT'].equals(expected['OUTPUT']))
+
+def test_indicator_handles_same_date(bool_df):
+    bool_df = get_indicator(bool_df, 'BOOL','PATIENTID','DATE','OUTPUT')
+    expected = pd.DataFrame([[False],[True],[True],[True],[True]], columns=['OUTPUT'])
+    print(bool_df)
+    assert(bool_df['OUTPUT'].equals(expected['OUTPUT']))
+
+def test_indicator_handles_nans(nan_bool_df):
+    nan_bool_df = get_indicator(nan_bool_df, 'BOOL','PATIENTID','DATE','OUTPUT')
+    expected = pd.DataFrame([[False],[True],[np.nan],[True],[True]], columns=['OUTPUT'])
+    print(nan_bool_df)
+    assert(nan_bool_df['OUTPUT'].equals(expected['OUTPUT']))
