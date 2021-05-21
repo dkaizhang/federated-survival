@@ -57,7 +57,7 @@ def get_indicator(table, target, groupby, date, name, key=None):
 
     df = pd.merge(df, temp, on=groupby+[date,target], how='left')
         
-    # df = df.drop(columns=['temp1'])
+    df = df.drop(columns=['temp1','cum'])
 
     end = df.shape[0]
     print("lost: ", start - end)
