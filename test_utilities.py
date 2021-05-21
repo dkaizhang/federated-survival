@@ -18,7 +18,12 @@ def bool_df():
 
 @pytest.fixture
 def nan_bool_df():
-    return pd.DataFrame([['0001','tum1','1',False], ['0001','tum2','2',True], ['0001','tum3', np.nan,np.nan],['0001','tum4','3',False],['0002','tum5','3',True]], columns=['PATIENTID','TUMOURID','DATE','BOOL'])
+    # return pd.DataFrame([['0001','tum1','1',False], ['0001','tum2','2',True], ['0001','tum3', np.nan,False],['0001','tum4','3',False],['0002','tum5','3',True]], columns=['PATIENTID','TUMOURID','DATE','BOOL'])
+    return pd.DataFrame([['0001','tum1','1',False], ['0001','tum1','1',True],['0001','tum2','2',True], ['0001','tum3', np.nan,False],['0001','tum4','3',False],['0002','tum5','3',True]], columns=['PATIENTID','TUMOURID','DATE','BOOL'])
+
+@pytest.fixture
+def dup_bool_df():
+    return pd.DataFrame([['0001','tum1','1',False], ['0001','tum1','1',False],['0001','tum2','1',False], ['0001','tum2', '1',False]], columns=['PATIENTID','TUMOURID','DATE','BOOL'])
 
 
 def test_cumulative_handles_same_date(simple_df):
@@ -44,6 +49,12 @@ def test_indicator_handles_same_date(bool_df):
 
 def test_indicator_handles_nans(nan_bool_df):
     nan_bool_df = get_indicator(nan_bool_df, 'BOOL','PATIENTID','DATE','OUTPUT')
-    expected = pd.DataFrame([[False],[True],[np.nan],[True],[True]], columns=['OUTPUT'])
+    expected = pd.DataFrame([[True],[True],[True],[np.nan],[True],[True]], columns=['OUTPUT'])
     print(nan_bool_df)
     assert(nan_bool_df['OUTPUT'].equals(expected['OUTPUT']))
+
+def test_indicator_handles_duplicates(dup_bool_df):
+    dup_bool_df = get_indicator(dup_bool_df, 'BOOL','PATIENTID','DATE','OUTPUT','TUMOURID')
+    expected = pd.DataFrame([[False],[False],[False],[False]], columns=['OUTPUT'])
+    print(dup_bool_df)
+    assert(dup_bool_df['OUTPUT'].equals(expected['OUTPUT']))

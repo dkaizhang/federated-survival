@@ -45,18 +45,24 @@ def get_indicator(table, target, groupby, date, name, key=None):
         groupby = [groupby]
     
     # collapse the dataframe based on keys
+    temp = df
     if key is not None:
         if type(key) is not list:
             key = [key]
-    temp = df.drop_duplicates(key)[groupby + [date, target]]
+        temp = temp.drop_duplicates(key)[groupby + key +[date,target]]
+    else: 
+        temp = temp[groupby + [date,target]]
     temp['temp1'] = temp[target].astype(float)
-
-    temp['cum'] = temp.sort_values(by=date, ascending=True).groupby(groupby)['temp1'].cumsum()
+    temp['cum'] = temp.sort_values(by='temp1',ascending=False).sort_values(by=date, ascending=True).groupby(groupby)['temp1'].cumsum()
+    print(temp)
     # temp = temp.drop(columns=target)
-    temp[name] = temp.dropna(subset=[date])['cum'] > 0
+    temp[name] = temp.dropna(subset=[date,target])['cum'] > 0
 
-    df = pd.merge(df, temp, on=groupby+[date,target], how='left')
-        
+    if key is not None:
+        df = pd.merge(df, temp, on=groupby+key+[date,target], how='left')
+    else:
+        df = pd.merge(df, temp, on=groupby+[date,target], how='left')
+
     df = df.drop(columns=['temp1','cum'])
 
     end = df.shape[0]
