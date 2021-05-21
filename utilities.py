@@ -19,18 +19,19 @@ def get_cumulative(table, groupby, date, name, key=None):
     temp = df.drop_duplicates(key)[groupby + [date]]
 
     # normal cumulative count hence disregards other values that should share position
-    temp['temp1'] = temp.sort_values(by=date, ascending=True).groupby(groupby).cumcount() + 1 
-    df = pd.concat([df, temp['temp1']], axis=1)
+    # temp['temp1'] = temp.sort_values(by=date, ascending=True).groupby(groupby).cumcount() + 1 
+    # df = pd.concat([df, temp['temp1']], axis=1)
 
     # counts duplicates 
     # dropna=False AND left join to keep all nans in the left table
-    temp = df.groupby(groupby+[date], dropna=False).size().reset_index(name='temp2')
+    temp = temp.groupby(groupby+[date], dropna=False).size().reset_index(name='no_of_records')
+    temp[name] = temp.dropna(subset=[date]).sort_values(by=date, ascending=True).groupby(groupby).cumsum()
     df = pd.merge(df, temp, on=groupby+[date], how='left')
 
     # take max of duplicate and normal cumulative count 
-    df[name] = df[['temp1', 'temp2']].max(axis=1)
-    
-    df = df.drop(columns=['temp1', 'temp2'])
+    # df[name] = df[['temp1', 'temp2']].max(axis=1)
+
+    # df = df.drop(columns=['no_of_records'])
 
     end = df.shape[0]
     print("lost: ", start - end)
