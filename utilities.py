@@ -71,3 +71,24 @@ def merge(left, right, how='inner', on=None, left_on=None, right_on=None, left_i
     left = left.merge(right,how,on,left_on,right_on,left_index,right_index,sort,suffixes,copy,indicator,validate)
     drop = ['_r' in c for c in left.columns]
     return left.drop(columns=left.columns[drop])
+
+def add_aggregate(table,what,target,groupby,name,key=None):
+
+    df = table.copy()
+    if groupby is not list:
+        groupby = [groupby]
+
+    filterby = groupby + [target]
+
+    if key is not None:
+        if type(key) is not list:
+            key = [key]
+        filterby = filterby + key
+
+    df = df.drop_duplicates(key)[filterby]
+
+    nonnulls = ~df[target].isnull()
+    df[name] = df[nonnulls].groupby(groupby)[target].transform(what)
+    df[name] = df[[name] + groupby].groupby(groupby)[name].transform('max')
+
+    return df
