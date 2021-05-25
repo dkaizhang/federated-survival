@@ -75,6 +75,8 @@ def merge(left, right, how='inner', on=None, left_on=None, right_on=None, left_i
 def add_aggregate(table,what,target,groupby,name,key=None):
 
     df = table.copy()
+    start = df.shape[0]
+
     if groupby is not list:
         groupby = [groupby]
 
@@ -85,10 +87,13 @@ def add_aggregate(table,what,target,groupby,name,key=None):
             key = [key]
         filterby = filterby + key
 
-    df = df.drop_duplicates(key)[filterby]
+    df = df.drop_duplicates(key)
 
     nonnulls = ~df[target].isnull()
     df[name] = df[nonnulls].groupby(groupby)[target].transform(what)
     df[name] = df[[name] + groupby].groupby(groupby)[name].transform('max')
 
+    end = df.shape[0]
+    print("lost: ", start - end)
+    
     return df

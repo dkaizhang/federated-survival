@@ -35,8 +35,7 @@ def dup_bool_df():
 @pytest.fixture
 def varying_heights_df():
     return pd.DataFrame([['0001','tum1',2.0], ['0001','tum2',3.0],['0002','tum3',np.nan],['0003','tum3',1.0],['0003','tum3',np.nan]], columns=['PATIENTID','TUMOURID','HEIGHT'])
-
-
+    
 
 def test_cumulative_handles_same_date(simple_df):
 
