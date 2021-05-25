@@ -66,3 +66,8 @@ def get_indicator(table, target, groupby, date, name, key=None):
     end = df.shape[0]
     print("lost: ", start - end)
     return df
+
+def merge(left, right, how='inner', on=None, left_on=None, right_on=None, left_index=False, right_index=False, sort=False, suffixes=('_x', '_y'), copy=True, indicator=False, validate=None):
+    left = left.merge(right,how,on,left_on,right_on,left_index,right_index,sort,suffixes,copy,indicator,validate)
+    drop = ['_r' in c for c in left.columns]
+    return left.drop(columns=left.columns[drop])
