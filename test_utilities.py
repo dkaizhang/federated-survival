@@ -9,6 +9,10 @@ def simple_df():
     return pd.DataFrame([['0001','tum1','1'], ['0001','tum2', '2'], ['0001','tum3', '2'],['0002','tum4','1'],['0002','tum5','3']], columns=['PATIENTID','TUMOURID','DATE'])
 
 @pytest.fixture
+def dup_df():
+    return pd.DataFrame([['0001','tum1','1'], ['0001','tum2', '2'], ['0001','tum2', '2']], columns=['PATIENTID','TUMOURID','DATE'])
+
+@pytest.fixture
 def nan_df():
     return pd.DataFrame([['0001','tum1','1','11'], ['0001','tum2','2','11'], ['0001','tum3', '2',np.nan],['0002','tum4','1',np.nan],['0002','tum5','3','13']], columns=['PATIENTID','TUMOURID','DATE','REGDATE'])
 
@@ -28,15 +32,23 @@ def dup_bool_df():
 
 def test_cumulative_handles_same_date(simple_df):
 
-    simple_df = get_cumulative(simple_df, 'PATIENTID', 'DATE', 'OUTPUT','TUMOURID')
+    simple_df = get_cumulative(simple_df, 'PATIENTID', 'DATE', 'OUTPUT')
 
     expected = pd.DataFrame([[1],[3],[3],[1],[2]], columns=['OUTPUT'])
     print(simple_df)
     assert(simple_df['OUTPUT'].equals(expected['OUTPUT']))
 
+def test_cumulative_handles_duplicates(dup_df):
+
+    dup_df = get_cumulative(dup_df, 'PATIENTID', 'DATE', 'OUTPUT')
+
+    expected = pd.DataFrame([[1],[2],[2]], columns=['OUTPUT'])
+    print(dup_df)
+    assert(dup_df['OUTPUT'].equals(expected['OUTPUT']))
+
 def test_cumulative_handles_nans(nan_df):
 
-    nan_df = get_cumulative(nan_df, 'PATIENTID', 'REGDATE', 'OUTPUT','TUMOURID')
+    nan_df = get_cumulative(nan_df, 'PATIENTID', 'REGDATE', 'OUTPUT')
     expected = pd.DataFrame([[2],[2],[np.nan],[np.nan],[1]], columns=['OUTPUT'])
     print(nan_df)
     assert(nan_df['OUTPUT'].equals(expected['OUTPUT']))

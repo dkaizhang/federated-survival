@@ -2,8 +2,8 @@ import pandas as pd
 
 # calculates a cumulative count of the target column based on a date column
 # first project only targets and date column
-# collapse to remove duplicates
-
+# collapse based on key to remove duplicates in the working table
+# DOES not remove duplicates in original input table
 def get_cumulative(table, groupby, date, name, key=None):
     
     df = table.copy()
@@ -12,23 +12,24 @@ def get_cumulative(table, groupby, date, name, key=None):
     if type(groupby) is not list:
         groupby = [groupby]
     
+    filterby = groupby + [date]
     # collapse the dataframe based on keys
     if key is not None:
         if type(key) is not list:
             key = [key]
-    temp = df.drop_duplicates(key)[groupby + [date]]
+        filterby = filterby + key
+    temp = df.drop_duplicates(key)[filterby]
 
     # counts number of records having the same values in groupby + [date]
-    # drop records without date
-    # sort by date 
-    # group by groupby
-    # then cumulatively sum over number of records
+    temp = temp.groupby(filterby, dropna=False).size().reset_index(name='no_of_records') # reset_index to turn the Series into a DataFrame with columns filled in
+
+    # drop records without date to exclude from cumsum
+    # cumulatively sum over number of records
     # dropna=False AND left join to keep all nans in the left table
-    temp = temp.groupby(groupby+[date], dropna=False).size().reset_index(name='no_of_records')
-    temp[name] = temp.dropna(subset=[date]).sort_values(by=date, ascending=True).groupby(groupby)['no_of_records'].cumsum()
+    temp[name] = temp.dropna(subset=[date]).sort_values(by=date, ascending=True).groupby(groupby)['no_of_records'].cumsum() 
 
-    df = pd.merge(df, temp, on=groupby+[date], how='left')
-
+    df = pd.merge(df, temp, on=filterby, how='left')
+    print(df)
     df = df.drop(columns=['no_of_records'])
 
     end = df.shape[0]
@@ -44,26 +45,23 @@ def get_indicator(table, target, groupby, date, name, key=None):
     if type(groupby) is not list:
         groupby = [groupby]
     
+    filterby = groupby + [date, target]
     # collapse the dataframe based on keys
-    temp = df
     if key is not None:
         if type(key) is not list:
             key = [key]
-        temp = temp.drop_duplicates(key)[groupby + key +[date,target]]
-    else: 
-        temp = temp[groupby + [date,target]]
+        filterby = filterby + key
+    temp = df.drop_duplicates(key)[filterby]
+
     temp['temp1'] = temp[target].astype(float)
-    temp['cum'] = temp.sort_values(by='temp1',ascending=False).sort_values(by=date, ascending=True).groupby(groupby)['temp1'].cumsum()
-    print(temp)
+    temp['temp2'] = temp.sort_values(by='temp1',ascending=False).sort_values(by=date, ascending=True).groupby(groupby)['temp1'].cumsum()
+    # print(temp)
     # temp = temp.drop(columns=target)
-    temp[name] = temp.dropna(subset=[date,target])['cum'] > 0
+    temp[name] = temp.dropna(subset=[date,target])['temp2'] > 0
 
-    if key is not None:
-        df = pd.merge(df, temp, on=groupby+key+[date,target], how='left')
-    else:
-        df = pd.merge(df, temp, on=groupby+[date,target], how='left')
+    df = pd.merge(df, temp, on=filterby, how='left')
 
-    df = df.drop(columns=['temp1','cum'])
+    df = df.drop(columns=['temp1','temp2'])
 
     end = df.shape[0]
     print("lost: ", start - end)
