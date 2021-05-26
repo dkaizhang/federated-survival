@@ -106,6 +106,6 @@ def mean_impute(df, column):
 # returns the column as a DataFrame
 def replace(df, column, markers):
     if type(markers) is not list: markers = [ markers ]    
-    X = df[column].replace(markers,np.NaN)
     count = df[column].isin(markers).sum()
+    X = df[column].replace(markers,np.NaN)
     return X, count
