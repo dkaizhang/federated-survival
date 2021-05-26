@@ -1,3 +1,4 @@
+import numpy as np
 import pandas as pd
 
 # calculates a cumulative count of the target column based on a date column
