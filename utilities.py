@@ -99,10 +99,12 @@ def add_aggregate(table,what,target,groupby,name,key=None):
     
     return df
 
+# returns the column as a DataFrame
 def mean_impute(df, column):
     return df[column].fillna(df[column].mean()).round(decimals=0)
 
-def replace(df, column, markers, target):
+# returns the column as a DataFrame
+def replace(df, column, markers):
     if type(markers) is not list: markers = [ markers ]    
     X = df[column].replace(markers,np.NaN)
     count = df[column].isin(markers).sum()
