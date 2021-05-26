@@ -97,3 +97,12 @@ def add_aggregate(table,what,target,groupby,name,key=None):
     print("lost: ", start - end)
     
     return df
+
+def mean_impute(df, column):
+    return df[column].fillna(df[column].mean()).round(decimals=0)
+
+def replace(df, column, markers, target):
+    if type(markers) is not list: markers = [ markers ]    
+    X = df[column].replace(markers,np.NaN)
+    count = df[column].isin(markers).sum()
+    return X, count
