@@ -104,8 +104,8 @@ def mean_impute(df, column):
     return df[column].fillna(df[column].mean()).round(decimals=0)
 
 # returns the column as a DataFrame
-def replace(df, column, markers):
+def replace(df, column, markers,target):
     if type(markers) is not list: markers = [ markers ]    
     count = df[column].isin(markers).sum()
-    X = df[column].replace(markers,np.NaN)
+    X = df[column].replace(markers,target)
     return X, count
