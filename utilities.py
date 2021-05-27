@@ -32,7 +32,6 @@ def get_cumulative(table, groupby, date, name, key=None):
     temp[name] = temp.dropna(subset=[date]).sort_values(by=date, ascending=True).groupby(groupby)['no_of_records'].cumsum() 
 
     df = pd.merge(df, temp, on=filterby, how='left')
-    print(df)
     df = df.drop(columns=['no_of_records'])
 
     end = df.shape[0]
@@ -60,7 +59,7 @@ def get_indicator(table, target, groupby, date, name, key=None):
     temp['temp2'] = temp.sort_values(by='temp1',ascending=False).sort_values(by=date, ascending=True).groupby(groupby)['temp1'].cumsum()
     # print(temp)
     # temp = temp.drop(columns=target)
-    temp[name] = temp.dropna(subset=[date,target])['temp2'] > 0
+    temp[name] = (temp.dropna(subset=[date,target])['temp2'] > 0).astype('boolean')
 
     df = pd.merge(df, temp, on=filterby, how='left')
 
