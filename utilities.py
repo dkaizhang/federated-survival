@@ -1,6 +1,8 @@
 import numpy as np
 import pandas as pd
 
+from sklearn.preprocessing import MinMaxScaler
+
 # calculates a cumulative count of the target column based on a date column
 # first project only targets and date column
 # collapse based on key to remove duplicates in the working table
@@ -109,3 +111,12 @@ def replace(df, column, markers, target):
     count = df[column].isin(markers).sum()
     X = df[column].replace(markers,target)
     return X, count
+
+
+# spits out numpy array
+def scale(df, method='minmax'):
+    if method == 'minmax':
+        scaler = MinMaxScaler()
+    else:
+        pass
+    return scaler.fit_transform(df)
