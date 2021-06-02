@@ -156,7 +156,7 @@ def load_table(table_name,
         if table_name == 'sact_regimen':
             table = pd.read_csv(read_path, quotechar='"', dtype=dtype, parse_dates=parse_dates,date_parser=date_parser,encoding="ISO-8859-1")
         else:
-            table = pd.read_csv(read_path, quotechar='"', dtype=dtype, parse_dates=parse_dates)
+            table = pd.read_csv(read_path, quotechar='"', dtype=dtype, parse_dates=parse_dates,date_parser=date_parser)
     except FileNotFoundError:
         raise ValueError("The file " + read_path + " does not exist.")
 
