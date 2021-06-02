@@ -151,9 +151,10 @@ def load_table(table_name,
         parse_dates=default_dates[table_name]
 
     read_path = os.path.join(path, prefix + table_name.lower() + ".csv")
+    date_parser = lambda c: pd.to_datetime(c, errors='coerce')
     try:
         if table_name == 'sact_regimen':
-            table = pd.read_csv(read_path, quotechar='"', dtype=dtype, parse_dates=parse_dates,encoding="ISO-8859-1")
+            table = pd.read_csv(read_path, quotechar='"', dtype=dtype, parse_dates=parse_dates,date_parser=date_parser,encoding="ISO-8859-1")
         else:
             table = pd.read_csv(read_path, quotechar='"', dtype=dtype, parse_dates=parse_dates)
     except FileNotFoundError:
