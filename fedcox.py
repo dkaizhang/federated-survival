@@ -1,3 +1,4 @@
+import numpy as np
 import torch
 import torch.nn.functional as F
 
@@ -7,6 +8,7 @@ from torch import Tensor
 from torch.utils.data import DataLoader
 from torch.utils.data import TensorDataset
 
+rng = np.random.default_rng(123)
 
 class DenseBlock(nn.Module):
     def __init__(self, dim_in, dim_out, bias=True, batch_norm=True, dropout=0, activation=nn.ReLU, 
@@ -85,13 +87,30 @@ def negative_llh(phi: Tensor, idx_durations: Tensor, events: Tensor,
     return _reduction(loss, reduction)
 
 
-def make_dataloader(data):
+def sample_iid(data, num_centers):
+    """
+    Randomly split data evenly across each centre
+    Arguments:
+    data -- combined data
+    num_centres -- number of centres to spread over    
+    Returns:
+    Dict with centre_id : indices of data assigned to centre
+    """
+    num_items = int(len(data)/num_centers)
+    dict_center_idxs, all_idxs = {}, [i for i in range(len(data))]
+    for i in range(num_centers):
+        dict_center_idxs[i] = set(rng.choice(all_idxs, num_items,
+                                             replace=False))
+        all_idxs = list(set(all_idxs) - dict_center_idxs[i])
+    return dict_center_idxs    
+
+def make_dataloader(data, batch_size, shuffle, num_workers=0, to_tensor=True):
     pass
 
 
 
 class Member():
-    def __init__(self, data, idxs) -> None:
+    def __init__(self, data, idxs: set) -> None:
         pass
     
 
