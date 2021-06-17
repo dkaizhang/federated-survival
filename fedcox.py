@@ -1,13 +1,89 @@
 import torch
-import torchtuples as tt
+import torch.nn.functional as F
 
-from pycox.models.loss import CoxPHLoss
+from torch import nn
+from torch import Tensor
 from torch.utils.data import DataLoader
 from torch.utils.data import TensorDataset
 
 
+class DenseBlock(nn.Module):
+    def __init__(self, dim_in, dim_out, bias=True, batch_norm=True, dropout=0, activation=nn.ReLU, 
+                    w_init_=lambda w: nn.init.kaiming_normal_(w, nonlinearity='relu')):
+        super().__init__()
+        self.linear = nn.Linear(dim_in, dim_out, bias)
+        # fill in self.linear.weight.data with kaiming normal
+        if w_init_:
+            w_init_(self.linear.weight.data)
+        self.activation = activation()
+        self.batch_norm = nn.BatchNorm1d(dim_out) if batch_norm else None
+        self.dropout = nn.Dropout(dropout) if dropout else None
 
-class FedCox(tt.Model):
+    def forward(self, input):
+        input = self.activation(self.linear(input))
+        if self.batch_norm:
+            input = self.batch_norm(input)
+        if self.dropout:
+            input = self.dropout(input)
+        return input
+
+class MLP(nn.Module):
+    def __init__(self, dim_in, num_nodes, dim_out, batch_norm=True, dropout=None, activation=nn.ReLU,
+                output_activation=None, output_bias=True,
+                w_init_=lambda w: nn.init.kaiming_normal_(w, nonlinearity='relu')):
+        super().__init__()
+        nodes = [dim_in].append(num_nodes)
+        net = []
+        for d_in, d_out in zip(nodes[:-1], nodes[1:]):
+            net.append(DenseBlock(d_in, d_out, bias=True, batch_norm=batch_norm, 
+                        dropout=dropout, activation=activation, w_init_=w_init_))
+        net.append(nn.Linear(num_nodes[-1], dim_out, output_bias))
+        if output_activation:
+            net.append(output_activation)
+        self.net = nn.Sequential(*net)
+
+    def forward(self, input):
+        return self.net(input)
+
+# scale the loss to make it data size invariant
+def _reduction(loss: Tensor, reduction: str = 'mean') -> Tensor:
+    if reduction == 'none':
+        return loss
+    elif reduction == 'mean':
+        return loss.mean()
+    raise ValueError(f"`reduction` = {reduction} is not valid. Use 'none', or 'mean'.")
+
+def negative_llh(phi: Tensor, idx_durations: Tensor, events: Tensor, 
+                reduction: str = 'mean') -> Tensor:
+    """
+    Arguments:
+        phi -- N x T. Estimates in (-inf, inf) where hazard = sigmoid(phi). 
+        idx_durations -- T. Discretised event times represent as indices.
+        events -- T. Indicator of event (1.) or censoring (0.). Floats.
+    Returns:
+        Negative LLH as a 1dim Tensor
+    """
+    if phi.shape[1] <= idx_durations.max():
+        raise ValueError(f"Network output `phi` is too small for `idx_durations`."+
+                         f" Need at least `phi.shape[1] = {idx_durations.max().item()+1}`,"+
+                         f" but got `phi.shape[1] = {phi.shape[1]}`")
+    if events.dtype is torch.bool:
+        events = events.float()
+    # stack events and idx_durations to get Tx1 Tensor
+    # .view(-1, 1) -- infer first dimension to get second dimension as size=1 
+    events = events.view(-1, 1)    
+    idx_durations = idx_durations.view(-1, 1)
+    # create NxT zero Tensor and put in each 
+    y_bce = torch.zeros_like(phi).scatter(1, idx_durations, events)
+    # with logits to pass phi through a sigmoid first -- recall it's unconstrained
+    bce = F.binary_cross_entropy_with_logits(phi, y_bce, reduction='none')
+    # sum the loss until failure time:
+        # first sum until each time
+        # then gather the summed loss at relevant failure time
+    loss = bce.cumsum(1).gather(1, idx_durations).view(-1)
+    return _reduction(loss, reduction)
+
+class FedCox():
 
     def __init__(self, net, loss=None, optimizer=None, device=None):
         super().__init__(net, loss, optimizer, device)
@@ -15,10 +91,6 @@ class FedCox(tt.Model):
     def fit(self, input, target, batch_size=256, epochs=1, callbacks=None, verbose=True,
             num_workers=0, shuffle=True, metrics=None, val_data=None, val_batch_size=8224,
             **kwargs):
+        pass
 
-        self.training_data = tt.tuplefy(input, target)
-        return super().fit(input, target, batch_size, epochs, callbacks, verbose,
-                           num_workers, shuffle, metrics, val_data, val_batch_size,
-                           **kwargs)
-    
-    
+
