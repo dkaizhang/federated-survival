@@ -1,6 +1,7 @@
 import torch
 import torch.nn.functional as F
 
+from tensorboardX import SummaryWriter
 from torch import nn
 from torch import Tensor
 from torch.utils.data import DataLoader
@@ -83,14 +84,39 @@ def negative_llh(phi: Tensor, idx_durations: Tensor, events: Tensor,
     loss = bce.cumsum(1).gather(1, idx_durations).view(-1)
     return _reduction(loss, reduction)
 
-class FedCox():
 
-    def __init__(self, net, loss=None, optimizer=None, device=None):
-        super().__init__(net, loss, optimizer, device)
+def make_dataloader(data):
+    pass
+
+
+
+class Member():
+    def __init__(self, data, idxs) -> None:
+        pass
     
+
+
+class Federation():
+
+    def __init__(self, net, num_centers, logger=None, loss=None, optimizer=None, device=None):
+        self.global_model = net
+        self.num_centers = num_centers
+        self.logger = logger
+        self.loss = loss
+        self.optimizer = optimizer
+        self.set_device(device)
+
+    def device(self):
+        return self._device
+
+    def set_device(self, device):
+        device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+        self._device = device
+        self.global_model.to(self.device())
+
+
     def fit(self, input, target, batch_size=256, epochs=1, callbacks=None, verbose=True,
             num_workers=0, shuffle=True, metrics=None, val_data=None, val_batch_size=8224,
             **kwargs):
         pass
-
 
