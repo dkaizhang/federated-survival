@@ -122,6 +122,34 @@ def average_weights(w):
     return w_avg
 
 
+class Discretiser():
+    def __init__(self, cuts):
+        self._cuts = cuts
+        self.cuts = None
+
+    def fit(self, durations):
+        durations = durations.astype(np.float64)
+        self.cuts = np.linspace(0, durations.max(), self._cuts, dtype=np.float64)
+        return self
+    
+    def transform(self, durations, events):    
+        idx_durations = np.digitize(durations, np.concatenate((self.cuts, [np.infty]), dtype=np.float64)) - 1 + events
+        return (idx_durations, events)
+
+    def fit_transform(self, durations, events):
+        self.fit(durations)
+        durations, events = self.transform(durations ,events)
+        return (durations, events)
+
+    @property
+    def dim_out(self):
+        if self.cuts is None:
+            raise ValueError("Need to call `fit` before this is accessible.")
+        return len(self.cuts)
+
+
+
+
 class DatasetSplit(torch.utils.data.Dataset):
     # idxs in original data which belong to center 
     def __init__(self, features, labels, idxs):
@@ -196,8 +224,7 @@ class Member():
 
 # Owns Members
 class Federation():
-
-    def __init__(self, net, num_centers, features, labels, local_epochs=1, logger=None, loss=None, optimizer=None, device=None):
+    def __init__(self, net, num_centers, local_epochs=1, logger=None, loss=None, optimizer=None, device=None):
         self.global_model = net
         self.num_centers = num_centers
         self.local_epochs = local_epochs
@@ -232,3 +259,5 @@ class Federation():
                 local_losses.append(copy.deepcopy(loss))
             global_weights = average_weights(local_weights)
             self.global_model.load_state_dict(global_weights)
+
+
