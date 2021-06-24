@@ -40,47 +40,38 @@ def varying_heights_df():
 def test_cumulative_handles_same_date(simple_df):
 
     df = get_cumulative(simple_df, 'PATIENTID', 'DATE', 'OUTPUT')
-
     expected = pd.DataFrame([[1],[3],[3],[1],[2]], columns=['OUTPUT'])
-    print(df)
     assert(df['OUTPUT'].equals(expected['OUTPUT']))
 
 def test_cumulative_handles_duplicates(dup_df):
 
     df = get_cumulative(dup_df, 'PATIENTID', 'DATE', 'OUTPUT')
-
     expected = pd.DataFrame([[1],[2],[2]], columns=['OUTPUT'])
-    print(df)
     assert(df['OUTPUT'].equals(expected['OUTPUT']))
 
 def test_cumulative_handles_nans(nan_df):
 
     df = get_cumulative(nan_df, 'PATIENTID', 'REGDATE', 'OUTPUT')
     expected = pd.DataFrame([[2],[2],[np.nan],[np.nan],[1]], columns=['OUTPUT'])
-    print(df)
     assert(df['OUTPUT'].equals(expected['OUTPUT']))
 
 def test_indicator_handles_same_date(bool_df):
     df = get_indicator(bool_df, 'BOOL','PATIENTID','DATE','OUTPUT')
     expected = pd.DataFrame([[False],[True],[True],[True],[True]], columns=['OUTPUT'])
-    print(df)
     assert(df['OUTPUT'].equals(expected['OUTPUT']))
 
 def test_indicator_handles_nans(nan_bool_df):
     df = get_indicator(nan_bool_df, 'BOOL','PATIENTID','DATE','OUTPUT')
     expected = pd.DataFrame([[True],[True],[True],[np.nan],[True],[True]], columns=['OUTPUT'])
-    print(df)
     assert(df['OUTPUT'].equals(expected['OUTPUT']))
 
 def test_indicator_handles_duplicates(dup_bool_df):
     df = get_indicator(dup_bool_df, 'BOOL','PATIENTID','DATE','OUTPUT','TUMOURID')
     expected = pd.DataFrame([[False],[False],[False],[False]], columns=['OUTPUT'])
-    print(df)
     assert(df['OUTPUT'].equals(expected['OUTPUT']))
 
 def test_aggregate_returns_median(varying_heights_df):
     df = add_aggregate(varying_heights_df,'median','HEIGHT','PATIENTID','OUTPUT')
     expected = pd.DataFrame([[2.5],[2.5],[np.nan],[1.0],[1.0]], columns=['OUTPUT'])
-    print(df)
     assert(df['OUTPUT'].equals(expected['OUTPUT']))
 

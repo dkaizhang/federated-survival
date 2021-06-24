@@ -59,7 +59,7 @@ def get_indicator(table, target, groupby, date, name, key=None):
     temp['temp2'] = temp.sort_values(by='temp1',ascending=False).sort_values(by=date, ascending=True).groupby(groupby)['temp1'].cumsum()
     # print(temp)
     # temp = temp.drop(columns=target)
-    temp[name] = (temp.dropna(subset=[date,target])['temp2'] > 0).astype('boolean')
+    temp[name] = (temp.dropna(subset=[date,target])['temp2'] > 0).astype('bool')
 
     df = pd.merge(df, temp, on=filterby, how='left')
 
