@@ -33,7 +33,7 @@ def negative_llh(phi: Tensor, idx_durations: Tensor, events: Tensor,
     idx_durations = idx_durations.view(-1, 1)
     # create NxT zero Tensor and put in each row at the idx_duration whether the event occurred
     # censored ppl have row of zeros, uncensored ppl have row with a single one
-    y_bce = torch.zeros_like(phi).scatter(1, idx_durations, events)
+    y_bce = torch.zeros_like(phi).scatter(1, idx_durations, events.float())
     # with logits to pass phi through a sigmoid first -- recall it's unconstrained
     bce = F.binary_cross_entropy_with_logits(phi, y_bce, reduction='none')
     # sum the loss until failure time:
