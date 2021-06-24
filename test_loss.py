@@ -5,7 +5,7 @@ import torch
 from loss import negative_llh
 from pycox.models.loss import nll_logistic_hazard
 
-@pytest.mark.parametrize('seed', [0])
+@pytest.mark.parametrize('seed', [0,2,4])
 def test_negative_llh_matches(seed):
     torch.manual_seed(seed)
     N = 100
