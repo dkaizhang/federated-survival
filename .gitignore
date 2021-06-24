@@ -10,3 +10,5 @@ Data/
 *.png
 scratch.ipynb
 __pycache__/
+.pytest_cache/
+logs/
