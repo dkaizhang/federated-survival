@@ -32,7 +32,9 @@ class Discretiser():
         return self
     
     def transform(self, durations, events):    
-        idx_durations = np.digitize(durations, np.concatenate((self.cuts, [np.infty]), dtype=np.float64)) - 1 + events
+        idx_durations = np.digitize(durations, self.cuts) - 1 + events
+        idx_durations = idx_durations.clip(0, len(self.cuts) - 1)
+        # idx_durations = np.digitize(durations, np.concatenate((self.cuts, [np.infty]), dtype=np.float64)) - 1 + events
         return (idx_durations, events)
 
     def fit_transform(self, durations, events):
