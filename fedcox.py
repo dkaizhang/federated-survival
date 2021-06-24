@@ -10,7 +10,6 @@ from torch.utils.data import DataLoader
 
 rng = np.random.default_rng(123)
 
-
 def average_weights(w):
     """
     Arguments:
@@ -79,8 +78,10 @@ class Member():
         return model.state_dict(), sum(epoch_loss) / len(epoch_loss)
 
 
-# Owns Members
 class Federation():
+    """
+    Accepts a neural net and performs the training with the nll as loss function (set in Member)
+    """
     def __init__(self, net, num_centers, local_epochs=1, logger=None, loss=None, optimizer=None, device=None):
         self.global_model = net
         self.num_centers = num_centers
@@ -97,7 +98,6 @@ class Federation():
         device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         self._device = device
         self.global_model.to(self.device())
-
 
     def fit(self, features, labels, batch_size=256, epochs=1, callbacks=None, verbose=True,
             num_workers=0, shuffle=True, metrics=None, val_data=None, val_batch_size=8224,

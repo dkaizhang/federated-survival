@@ -3,7 +3,6 @@ import torch
 
 rng = np.random.default_rng(123)
 
-
 def sample_iid(data, num_centers):
     """
     Randomly split data evenly across each centre
@@ -32,9 +31,11 @@ class Discretiser():
         return self
     
     def transform(self, durations, events):    
+        # -1 so that idx_durations starts from 0
+        # +events so that uncensored values never have t=0?
+        # clipping it so that max index falls within [0,...,self.cuts - 1]
         idx_durations = np.digitize(durations, self.cuts) - 1 + events
         idx_durations = idx_durations.clip(0, len(self.cuts) - 1)
-        # idx_durations = np.digitize(durations, np.concatenate((self.cuts, [np.infty]), dtype=np.float64)) - 1 + events
         return (idx_durations, events)
 
     def fit_transform(self, durations, events):
