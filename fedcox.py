@@ -1,5 +1,6 @@
 import copy
 import numpy as np
+import pandas as pd
 import torch
 
 from dataset import DatasetSplit, sample_iid
@@ -110,8 +111,13 @@ class Member():
         surv = (1 - hazard).log().cumsum(1).exp()
         return surv.detach().numpy()
 
+    def predict_surv_df(self, model, cuts, input=None):
+        surv = self.predict_surv(model, input)
+        return pd.DataFrame(surv.transpose(), cuts)
+
 class Federation():
     """
+    Accepts data, creates Members and distributes data
     Accepts a neural net and performs the training with the nll as loss function (set in Member)
     """
     def __init__(self, features, labels, net, num_centers, optimizer, lr, batch_size=256, local_epochs=1, loss=negative_llh,  device=None, logger=SummaryWriter('./logs')):
@@ -214,4 +220,12 @@ class Federation():
         model.load_state_dict(self.best_model)
         for member in self.members:
             surv.append(member.predict_surv(model, input))        
+        return surv
+
+    def predict_surv_df(self, cuts, input=None):
+        surv = []
+        model = copy.deepcopy(self.global_model)
+        model.load_state_dict(self.best_model)
+        for member in self.members:
+            surv.append(member.predict_surv_df(model, cuts, input))        
         return surv
