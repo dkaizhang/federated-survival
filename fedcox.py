@@ -101,9 +101,14 @@ class Member():
     def predict_hazard(self, model, input=None):
         model.eval()
         loader = input if not None else self.testloader 
-        hazard = torch.cat([model(data[0]) for data in loader], axis=0)         
+        hazard = torch.cat([model(data[0]).sigmoid() for data in loader], axis=0)         
         model.train()
         return hazard            
+
+    def predict_surv(self, model, input=None):
+        hazard = self.predict_hazard(model, input)
+        surv = (1 - hazard).log().cumsum(1).exp()
+        return surv        
 
 class Federation():
     """
@@ -202,3 +207,11 @@ class Federation():
         for member in self.members:
             hazard.append(member.predict_hazard(model, input))
         return hazard
+
+    def predict_surv(self, input=None):
+        surv = []
+        model = copy.deepcopy(self.global_model)
+        model.load_state_dict(self.best_model)
+        for member in self.members:
+            surv.append(member.predict_surv(model, input))        
+        return surv
