@@ -103,12 +103,12 @@ class Member():
         loader = input if not None else self.testloader 
         hazard = torch.cat([model(data[0]).sigmoid() for data in loader], axis=0)         
         model.train()
-        return hazard            
+        return hazard
 
     def predict_surv(self, model, input=None):
         hazard = self.predict_hazard(model, input)
         surv = (1 - hazard).log().cumsum(1).exp()
-        return surv        
+        return surv.detach().numpy()
 
 class Federation():
     """
