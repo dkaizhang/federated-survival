@@ -82,6 +82,18 @@ class Member():
             epoch_loss.append(sum(batch_loss)/len(batch_loss))
         return model.state_dict(), sum(epoch_loss) / len(epoch_loss)
 
+    def get_loss(self, model, validate=True):
+        model.eval()
+        loader = self.validloader if validate else self.testloader
+        batch_loss = []
+        for batch_idx, data in enumerate(loader):
+            features, durations, events = data[0], data[1], data[2]
+            features, durations, events = features.to(self.device), durations.to(self.device), events.to(self.device)
+            phi = model(features)
+            loss = self.loss(phi, durations, events)
+            batch_loss.append(loss.item())
+        return sum(batch_loss) / len(batch_loss)
+
 
 class Federation():
     """
@@ -105,23 +117,32 @@ class Federation():
         self._device = device
         self.global_model.to(self.device())
 
-    def fit(self, features, labels, batch_size=256, epochs=1, callbacks=None, verbose=True,
-            num_workers=0, shuffle=True, metrics=None, val_data=None, val_batch_size=8224,
-            print_every=2):
+    def fit(self, features, labels, batch_size=256, epochs=1, patience=6, print_every=2):
         self.global_model.train()
         dict_center_idxs = sample_iid(features, self.num_centers)
 
         train_loss = []
+        val_loss = []
+
+        members = []
+
+        for center_idx in range(self.num_centers):
+            members.append(Member(self.optimizer, self.lr, features, labels, [0.8, 0.1, 0.1], 
+                                    dict_center_idxs[center_idx], self.local_epochs, self.logger, self.loss, batch_size))
+
+        epochs_no_improve = 0
+        min_val_loss = 100000
+        best_model = None
 
         for epoch in range(epochs):
             local_weights, local_losses = [], []
             print(f'\n | Global Training Round : {epoch+1} |\n')
 
-            for center_idx in range(self.num_centers):
-                member = Member(self.optimizer, self.lr, features, labels, [0.8, 0.1, 0.1], dict_center_idxs[center_idx], self.local_epochs, self.logger, self.loss)
+            for member in members:
                 w, loss = member.update_weights(model=copy.deepcopy(self.global_model), global_round=epoch) 
                 local_weights.append(copy.deepcopy(w))
                 local_losses.append(copy.deepcopy(loss))
+            # potentially weight this
             global_weights = average_weights(local_weights)
 
             #update global model with new weights
@@ -130,7 +151,30 @@ class Federation():
             loss_avg = sum(local_losses) / len(local_losses)
             train_loss.append(loss_avg)
 
+            local_val_losses = []
+            for member in members:
+                local_val_loss = member.get_loss(copy.deepcopy(self.global_model), validate=True)
+                local_val_losses.append(local_val_loss)
+            # potentially weight this
+            val_loss_avg = sum(local_val_losses) / len(local_val_losses)
+
             # print global training loss after every 'i' rounds
             if (epoch+1) % print_every == 0:
-                print(f' \nAvg Training Stats after {epoch+1} global rounds:')
-                print(f'Training Loss : {np.mean(np.array(train_loss))}')
+                print(f' \Latest training stats after {epoch+1} global rounds:')
+                print(f'Training loss : {train_loss[-1]}')
+                print(f'Validation loss : {val_loss[-1]}') 
+
+            if val_loss_avg < min_val_loss:
+                best_model = global_weights
+                min_val_loss = val_loss_avg
+                epochs_no_improve = 0
+            else:
+                epochs_no_improve += 1
+                if epochs_no_improve > patience:
+                    print('Early stop')
+                    torch.save(best_model, '.best_model.pt')
+            
+            val_loss.append(val_loss_avg)
+
+        print('Epochs exhausted')
+        torch.save(best_model, '.best_model.pt')
