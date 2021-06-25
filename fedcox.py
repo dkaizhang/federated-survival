@@ -5,6 +5,7 @@ import torch
 from dataset import DatasetSplit, sample_iid
 from loss import negative_llh
 
+from pycox.models.interpolation import InterpolateLogisticHazard
 from tensorboardX import SummaryWriter
 from torch.utils.data import DataLoader
 
@@ -37,6 +38,8 @@ class Member():
         self.loss = loss
         self.trainloader, self.validloader, self.testloader = self.train_val_test(features, labels, split, list(idxs))
 
+    def get_train_val_test(self):
+        return self.trainloader, self.validloader, self.testloader
 
     def train_val_test(self, features, labels, split, idxs: list):
         # rng.shuffle(idxs)
@@ -46,9 +49,9 @@ class Member():
         trainloader = DataLoader(DatasetSplit(features, labels, idxs_train),
                                  batch_size=self.batch_size, shuffle=True)
         validloader = DataLoader(DatasetSplit(features, labels, idxs_val),
-                                 batch_size=max(1,int(len(idxs_val)/10)), shuffle=False)
+                                 batch_size=int(self.batch_size/10), shuffle=False)
         testloader = DataLoader(DatasetSplit(features, labels, idxs_test),
-                                batch_size=max(1,int(len(idxs_test)/10)), shuffle=False)
+                                batch_size=int(self.batch_size/10), shuffle=False)
         return trainloader, validloader, testloader
 
     def update_weights(self, model, global_round):
@@ -92,22 +95,33 @@ class Member():
             phi = model(features)
             loss = self.loss(phi, durations, events)
             batch_loss.append(loss.item())
+        model.train()
         return sum(batch_loss) / len(batch_loss)
 
+    def predict_hazard(self, model, input=None):
+        model.eval()
+        loader = input if not None else self.testloader 
+        hazard = torch.cat([model(data[0]) for data in loader], axis=0)         
+        model.train()
+        return hazard            
 
 class Federation():
     """
     Accepts a neural net and performs the training with the nll as loss function (set in Member)
     """
-    def __init__(self, net, num_centers, optimizer, lr, local_epochs=1, loss=negative_llh,  device=None, logger=SummaryWriter('./logs')):
+    def __init__(self, features, labels, net, num_centers, optimizer, lr, batch_size=256, local_epochs=1, loss=negative_llh,  device=None, logger=SummaryWriter('./logs')):
+        self.features= features
+        self.labels= labels
         self.global_model = net
         self.num_centers = num_centers
         self.optimizer = optimizer
         self.lr = lr
         self.local_epochs = local_epochs
         self.loss = loss
-        self.set_device(device)
         self.logger = logger
+        self.best_model = None
+        self.set_device(device)
+        self.set_members(features, labels, batch_size)
 
     def device(self):
         return self._device
@@ -117,28 +131,30 @@ class Federation():
         self._device = device
         self.global_model.to(self.device())
 
-    def fit(self, features, labels, batch_size=256, epochs=1, patience=6, print_every=2):
-        self.global_model.train()
+    def set_members(self, features, labels, batch_size):
         dict_center_idxs = sample_iid(features, self.num_centers)
+        self.members = []
+        for center_idx in range(self.num_centers):
+            self.members.append(Member(self.optimizer, self.lr, features, labels, [0.8, 0.1, 0.1], 
+                                    dict_center_idxs[center_idx], self.local_epochs, self.logger, self.loss, batch_size))
+
+    def get_members(self):
+        return self.members
+
+    def fit(self, epochs=1, patience=6, print_every=2):
+        self.global_model.train()
 
         train_loss = []
         val_loss = []
 
-        members = []
-
-        for center_idx in range(self.num_centers):
-            members.append(Member(self.optimizer, self.lr, features, labels, [0.8, 0.1, 0.1], 
-                                    dict_center_idxs[center_idx], self.local_epochs, self.logger, self.loss, batch_size))
-
         epochs_no_improve = 0
         min_val_loss = 100000
-        best_model = None
-
+        
         for epoch in range(epochs):
             local_weights, local_losses = [], []
             print(f'\n | Global Training Round : {epoch+1} |\n')
 
-            for member in members:
+            for member in self.members:
                 w, loss = member.update_weights(model=copy.deepcopy(self.global_model), global_round=epoch) 
                 local_weights.append(copy.deepcopy(w))
                 local_losses.append(copy.deepcopy(loss))
@@ -152,7 +168,7 @@ class Federation():
             train_loss.append(loss_avg)
 
             local_val_losses = []
-            for member in members:
+            for member in self.members:
                 local_val_loss = member.get_loss(copy.deepcopy(self.global_model), validate=True)
                 local_val_losses.append(local_val_loss)
             # potentially weight this
@@ -165,16 +181,24 @@ class Federation():
                 print(f'Validation loss : {val_loss[-1]}') 
 
             if val_loss_avg < min_val_loss:
-                best_model = global_weights
+                self.best_model = global_weights
                 min_val_loss = val_loss_avg
                 epochs_no_improve = 0
             else:
                 epochs_no_improve += 1
                 if epochs_no_improve > patience:
                     print('Early stop')
-                    torch.save(best_model, '.best_model.pt')
+                    torch.save(self.best_model, '.best_model.pt')
             
             val_loss.append(val_loss_avg)
 
         print('Epochs exhausted')
-        torch.save(best_model, '.best_model.pt')
+        torch.save(self.best_model, '.best_model.pt')
+
+    def predict_hazard(self, input=None):
+        hazard = []
+        model = copy.deepcopy(self.global_model)
+        model.load_state_dict(self.best_model)
+        for member in self.members:
+            hazard.append(member.predict_hazard(model, input))
+        return hazard
