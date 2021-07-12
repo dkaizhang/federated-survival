@@ -12,3 +12,4 @@ scratch.ipynb
 __pycache__/
 .pytest_cache/
 logs/
+*.eps
