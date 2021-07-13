@@ -1,8 +1,7 @@
 import numpy as np
 import pytest
-import torch
 
-from dataset import Discretiser
+from discretiser import Discretiser
 from pycox.preprocessing.label_transforms import LabTransDiscreteTime
 
 @pytest.mark.parametrize('seed', [0,2,4])
