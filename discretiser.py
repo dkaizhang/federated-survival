@@ -1,14 +1,25 @@
 import numpy as np
 
+from lifelines import KaplanMeierFitter
 
 class Discretiser():
-    def __init__(self, cuts):
+    def __init__(self, cuts, scheme='equidistant'):
         self._cuts = cuts
+        self._scheme = scheme
         self.cuts = None
 
-    def fit(self, durations):
+    def fit(self, durations, events):
         durations = durations.astype(np.float64)
-        self.cuts = np.linspace(0, durations.max(), self._cuts, dtype=np.float64)
+        if self._scheme == 'equidistant':
+            self.cuts = np.linspace(0, durations.max(), self._cuts, dtype=np.float64)
+        elif self._scheme == 'km':
+            kmf = KaplanMeierFitter()
+            kmf.fit(durations, events)
+            last_duration = durations.max()
+            percentiles = np.linspace(kmf.predict(last_duration), kmf.predict(0), self._cuts,dtype=np.float64)
+            self.cuts = np.unique([kmf.percentile(p) for p in percentiles][::-1])
+        else: 
+            ValueError
         return self
     
     def transform(self, durations, events):    
@@ -20,7 +31,7 @@ class Discretiser():
         return (idx_durations, events)
 
     def fit_transform(self, durations, events):
-        self.fit(durations)
+        self.fit(durations, events)
         durations, events = self.transform(durations ,events)
         return (durations, events)
 
