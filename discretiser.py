@@ -2,7 +2,13 @@ import numpy as np
 
 from lifelines import KaplanMeierFitter
 
+
 class Discretiser():
+    """
+    Arguments:
+    cuts -- number of cuts to make.
+    scheme -- either equidistant or km
+    """
     def __init__(self, cuts, scheme='equidistant'):
         self._cuts = cuts
         self._scheme = scheme
