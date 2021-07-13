@@ -37,3 +37,15 @@ class DatasetSplit(torch.utils.data.Dataset):
        
     def __len__(self):
         return len(self.idxs)
+
+class Dataset(torch.utils.data.Dataset):
+    def __init__(self, features, labels):
+        self.features = features
+        self.durations = labels[0]
+        self.events = labels[1]
+
+    def __getitem__(self, index):
+        return self.features[index], self.durations[index], self.events[index]
+       
+    def __len__(self):
+        return len(self.events)
