@@ -138,6 +138,8 @@ class Federation():
 
     def set_device(self, device):
         device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+        if torch.cuda.is_available():
+            print(torch.cuda.get_device_name(torch.cuda.current_device()))
         self._device = device
         self.global_model.to(self.device())
 
