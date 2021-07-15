@@ -28,14 +28,13 @@ def average_weights(w):
 
 
 class Member():
-    def __init__(self, optimizer, lr, features, labels, split, idxs: set, epochs, logger, loss, batch_size=256, device=None, verbose=True ) -> None:
+    def __init__(self, optimizer, lr, features, labels, split, idxs: set, epochs, logger, loss, batch_size=256, device=None) -> None:
         self.optimizer = optimizer
         self.lr = lr
         self.epochs = epochs
         self.logger = logger
         self.batch_size = batch_size
         self.device = device
-        self.verbose = verbose
         self.loss = loss
         self.trainloader, self.validloader, self.testloader = self.train_val_test(features, labels, split, list(idxs))
 
@@ -55,7 +54,7 @@ class Member():
                                 batch_size=int(self.batch_size/10), shuffle=False)
         return trainloader, validloader, testloader
 
-    def update_weights(self, model, global_round):
+    def update_weights(self, model, global_round, verbose):
         model.train()
         epoch_loss = []
 
@@ -76,7 +75,7 @@ class Member():
                 loss.backward()
                 optimizer.step()
 
-                if self.verbose and (batch_idx % 10 == 0):
+                if verbose and (batch_idx % 10 == 0):
                     print('| Global Round : {} | Local Epoch : {} | [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(
                         global_round, iter, batch_idx * len(features),
                         len(self.trainloader.dataset),
@@ -152,7 +151,7 @@ class Federation():
     def get_members(self):
         return self.members
 
-    def fit(self, epochs=1, patience=6, print_every=2):
+    def fit(self, epochs=1, patience=6, print_every=2, verbose=False):
         self.global_model.train()
 
         train_loss = []
@@ -166,7 +165,7 @@ class Federation():
             print(f'\n | Global Training Round : {epoch+1} |\n')
 
             for member in self.members:
-                w, loss = member.update_weights(model=copy.deepcopy(self.global_model), global_round=epoch) 
+                w, loss = member.update_weights(model=copy.deepcopy(self.global_model), global_round=epoch, verbose=verbose) 
                 local_weights.append(copy.deepcopy(w))
                 local_losses.append(copy.deepcopy(loss))
             # potentially weight this
