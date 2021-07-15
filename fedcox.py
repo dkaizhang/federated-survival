@@ -146,7 +146,7 @@ class Federation():
         dict_center_idxs = sample_iid(features, self.num_centers)
         self.members = []
         for center_idx in range(self.num_centers):
-            self.members.append(Member(self.optimizer, self.lr, features, labels, [1.0, 0, 0], 
+            self.members.append(Member(self.optimizer, self.lr, features, labels, [0.9, 0.1, 0], 
                                     dict_center_idxs[center_idx], self.local_epochs, self.logger, self.loss, batch_size))
 
     def get_members(self):
