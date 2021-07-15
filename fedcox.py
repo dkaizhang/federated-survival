@@ -138,8 +138,6 @@ class Federation():
 
     def set_device(self, device):
         device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-        if torch.cuda.is_available():
-            print(torch.cuda.get_device_name(torch.cuda.current_device()))
         self._device = device
         self.global_model.to(self.device())
 
@@ -164,7 +162,8 @@ class Federation():
         
         for epoch in range(epochs):
             local_weights, local_losses = [], []
-            print(f'\n | Global Training Round : {epoch+1} |\n')
+            if verbose:
+                print(f'\n | Global Training Round : {epoch+1} |\n')
 
             for member in self.members:
                 w, loss = member.update_weights(model=copy.deepcopy(self.global_model), global_round=epoch, verbose=verbose) 
@@ -199,7 +198,7 @@ class Federation():
             else:
                 epochs_no_improve += 1
                 if epochs_no_improve > patience:
-                    print('Early stop')
+                    print(f'Early stop at epoch {epoch+1}')
                     torch.save(self.best_model, '.best_model.pt')
                     return
             val_loss.append(val_loss_avg)
