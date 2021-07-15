@@ -53,8 +53,7 @@ class PHBlock(nn.Module):
         torch.nn.init.ones_(self.linear2.weight.data)
         torch.nn.init.normal_(self.linear2.bias.data, mean=0.0, std=0.5)
         self.linear2.weight.requires_grad = False
-        print(self.linear2.weight.data)
-        print(self.linear2.bias.data)
+
 
     def forward(self, input):
         input = self.linear1(input)
@@ -62,6 +61,7 @@ class PHBlock(nn.Module):
             input = self.batch_norm(input)
         input = self.linear2(input)
         return input
+    
 
 class CoxPH(nn.Module):
     def __init__(self, dim_in, dim_out, batch_norm=True, output_activation=None):
