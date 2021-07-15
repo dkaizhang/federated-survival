@@ -151,7 +151,7 @@ class Federation():
     def get_members(self):
         return self.members
 
-    def fit(self, epochs=1, patience=6, print_every=2, verbose=False):
+    def fit(self, epochs=1, patience=3, print_every=2, verbose=False):
         self.global_model.train()
 
         train_loss = []
@@ -199,7 +199,7 @@ class Federation():
                 if epochs_no_improve > patience:
                     print('Early stop')
                     torch.save(self.best_model, '.best_model.pt')
-            
+                    return
             val_loss.append(val_loss_avg)
 
         print('Epochs exhausted')
