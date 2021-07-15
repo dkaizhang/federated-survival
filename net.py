@@ -75,3 +75,22 @@ class CoxPH(nn.Module):
     def forward(self, input):
         return self.net(input)
 
+class MLPPH(nn.Module):
+    def __init__(self, dim_in, num_nodes, dim_out, batch_norm=True, dropout=None, activation=nn.ReLU,
+                output_activation=None, output_bias=True,
+                w_init_=lambda w: nn.init.kaiming_normal_(w, nonlinearity='relu')):
+        super().__init__()
+        num_nodes = [dim_in] + num_nodes
+        net = []
+        for d_in, d_out in zip(num_nodes[:-1], num_nodes[1:]):
+            net.append(DenseBlock(d_in, d_out, bias=True, batch_norm=batch_norm, 
+                        dropout=dropout, activation=activation, w_init_=w_init_))
+        # print(num_nodes[-1], dim_out, output_bias)
+        # print(type(num_nodes[-1]), type(dim_out))
+        net.append(PHBlock(num_nodes[-1], dim_out, batch_norm))
+        if output_activation:
+            net.append(output_activation)
+        self.net = nn.Sequential(*net)
+
+    def forward(self, input):
+        return self.net(input)
