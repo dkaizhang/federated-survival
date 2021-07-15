@@ -164,7 +164,8 @@ class Federation():
         
         for epoch in range(epochs):
             local_weights, local_losses = [], []
-            print(f'\n | Global Training Round : {epoch+1} |\n')
+            if verbose:
+                print(f'\n | Global Training Round : {epoch+1} |\n')
 
             for member in self.members:
                 w, loss = member.update_weights(model=copy.deepcopy(self.global_model), global_round=epoch, verbose=verbose) 
