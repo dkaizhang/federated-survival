@@ -30,8 +30,8 @@ class MLP(nn.Module):
         for d_in, d_out in zip(num_nodes[:-1], num_nodes[1:]):
             net.append(DenseBlock(d_in, d_out, bias=True, batch_norm=batch_norm, 
                         dropout=dropout, activation=activation, w_init_=w_init_))
-        print(num_nodes[-1], dim_out, output_bias)
-        print(type(num_nodes[-1]), type(dim_out))
+        # print(num_nodes[-1], dim_out, output_bias)
+        # print(type(num_nodes[-1]), type(dim_out))
         net.append(nn.Linear(num_nodes[-1], dim_out, output_bias))
         if output_activation:
             net.append(output_activation)
