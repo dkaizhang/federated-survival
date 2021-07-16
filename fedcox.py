@@ -105,7 +105,7 @@ class Member():
         model.to(self.device)
         model.eval()
         loader = input if not None else self.testloader 
-        hazard = torch.cat([model(data[0]).sigmoid() for data in loader], axis=0)         
+        hazard = torch.cat([model(data[0].to(self.device)).sigmoid() for data in loader], axis=0)         
         model.train()
         return hazard
 
