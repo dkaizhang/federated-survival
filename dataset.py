@@ -33,17 +33,19 @@ def sample_by_quantiles(data, column, num_centers):
     Returns:
     Dict with centre_id : indices of data assigned to centre
     """
-
-    data = data.T
-    dict_center_idxs, all_idxs = {}, np.array([i for i in range(len(data[column]))])
+    if type(data) is tuple:
+        data = data[column]
+    else:
+        data = data.T[column]
+    dict_center_idxs, all_idxs = {}, np.array([i for i in range(len(data))])
     quantile = 1 / num_centers
-    previous_idxs = torch.zeros(len(data[column]),dtype=torch.bool).numpy()
+    previous_idxs = torch.zeros(len(data),dtype=torch.bool).numpy()
 
     for i in range(num_centers):
         if quantile > 1:
             ValueError
-        cutoff = np.quantile(data[column],quantile)
-        selected_idxs = data[column] <= cutoff 
+        cutoff = np.quantile(data,quantile)
+        selected_idxs = data <= cutoff 
         idxs_in_quantile = selected_idxs & ~previous_idxs
         previous_idxs = previous_idxs | idxs_in_quantile
         dict_center_idxs[i] = all_idxs[idxs_in_quantile]
