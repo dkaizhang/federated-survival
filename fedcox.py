@@ -151,7 +151,7 @@ class Federation():
     def get_members(self):
         return self.members
 
-    def fit(self, epochs=1, patience=3, print_every=2, verbose=False):
+    def fit(self, epochs=1, patience=5, print_every=2, verbose=False):
         self.global_model.train()
 
         train_loss = []
