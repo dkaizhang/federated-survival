@@ -38,6 +38,7 @@ class Member():
         self.loss = loss
         self.trainloader, self.validloader, self.testloader = self.train_val_test(features, labels, split, list(idxs))
 
+
     def get_train_val_test(self):
         return self.trainloader, self.validloader, self.testloader
 
@@ -55,6 +56,7 @@ class Member():
         return trainloader, validloader, testloader
 
     def update_weights(self, model, global_round, verbose):
+        model.to(self.device)
         model.train()
         epoch_loss = []
 
@@ -150,7 +152,7 @@ class Federation():
         self.members = []
         for center_idx in range(self.num_centers):
             self.members.append(Member(self.optimizer, self.lr, features, labels, [0.9, 0.1, 0], 
-                                    dict_center_idxs[center_idx], self.local_epochs, self.logger, self.loss, batch_size))
+                                    dict_center_idxs[center_idx], self.local_epochs, self.logger, self.loss, batch_size, self._device))
 
     def get_members(self):
         return self.members
