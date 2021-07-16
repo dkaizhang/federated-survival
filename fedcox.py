@@ -211,11 +211,12 @@ class Federation():
                 if epochs_no_improve > patience:
                     print(f'Early stop at epoch {epoch+1}')
                     torch.save(self.best_model, '.best_model.pt')
-                    return
+                    return epoch + 1
             val_loss.append(val_loss_avg)
 
         print('Epochs exhausted')
         torch.save(self.best_model, '.best_model.pt')
+        return epochs
 
     def predict_hazard(self, input=None):
         hazard = []
