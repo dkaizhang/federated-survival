@@ -88,6 +88,7 @@ class Member():
         return model.state_dict(), sum(epoch_loss) / len(epoch_loss)
 
     def get_loss(self, model, validate=True):
+        model.to(self.device)
         model.eval()
         loader = self.validloader if validate else self.testloader
         batch_loss = []
@@ -101,6 +102,7 @@ class Member():
         return sum(batch_loss) / len(batch_loss)
 
     def predict_hazard(self, model, input=None):
+        model.to(self.device)
         model.eval()
         loader = input if not None else self.testloader 
         hazard = torch.cat([model(data[0]).sigmoid() for data in loader], axis=0)         
