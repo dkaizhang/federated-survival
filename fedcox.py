@@ -112,7 +112,7 @@ class Member():
     def predict_surv(self, model, input=None):
         hazard = self.predict_hazard(model, input)
         surv = (1 - hazard).log().cumsum(1).exp()
-        return surv.detach().numpy()
+        return surv.cpu().detach().numpy()
 
     def predict_surv_df(self, model, cuts, input=None):
         surv = self.predict_surv(model, input)
