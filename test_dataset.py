@@ -14,7 +14,7 @@ from load import read_csv
 
 
 @pytest.mark.parametrize('seed', [0,2,4])
-@pytest.mark.parametrize('centers', [2,5,10])
+@pytest.mark.parametrize('centers', [1,2,5,10])
 def test_no_overlap_iid(seed,centers):
     N = 100
     data = torch.randint(low=0, high=2, size=(N,6)).numpy()
@@ -28,7 +28,7 @@ def test_no_overlap_iid(seed,centers):
 
 
 @pytest.mark.parametrize('seed', [0,2,4])
-@pytest.mark.parametrize('centers', [2,5,10])
+@pytest.mark.parametrize('centers', [1,2,5,10])
 @pytest.mark.parametrize('start_center', [0,1,2])
 def test_keys_iid(seed,centers, start_center):
     N = 100
@@ -40,7 +40,7 @@ def test_keys_iid(seed,centers, start_center):
 
 
 @pytest.mark.parametrize('seed', [0,2,4])
-@pytest.mark.parametrize('centers', [2,5,10])
+@pytest.mark.parametrize('centers', [1,2,5,10])
 def test_keys_quantile(seed,centers):
     N = 100
     data = torch.rand(size=(N,3)).numpy()
@@ -52,7 +52,7 @@ def test_keys_quantile(seed,centers):
     assert(len(center_idxs.keys()) == centers)
 
 @pytest.mark.parametrize('seed', [0,2,4])
-@pytest.mark.parametrize('centers', [2,5,10])
+@pytest.mark.parametrize('centers', [1,2,5,10])
 def test_no_overlap_quantile(seed,centers):
     N = 100
     data = torch.rand(size=(N,3)).numpy()
@@ -71,7 +71,7 @@ def test_no_overlap_quantile(seed,centers):
     
 
 @pytest.mark.parametrize('seed', [0,2,4])
-@pytest.mark.parametrize('centers', [2,5,10])
+@pytest.mark.parametrize('centers', [1,2,5,10])
 def test_no_overlap_quantile(seed,centers):
     N = 100
     datapath = './Data/data.csv'
