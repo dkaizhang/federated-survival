@@ -21,6 +21,32 @@ def sample_iid(data, num_centers):
     return dict_center_idxs    
 
 
+def sample_benign_malignant(data, num_centers):
+    """
+    Split data between benign and malignant tumours then distribute across each centre
+    Arguments:
+    data -- combined data
+    num_centres -- number of centres to spread over    
+    Returns:
+    Dict with centre_id : indices of data assigned to centre
+    """
+    malignant = (data['SITE_C71'] == 1) | (data['SITE_C70'] == 1) | (data['SITE_C72'] == 1)
+    benign = (data['SITE_D32'] == 1) | (data['SITE_D33'] == 1) | (data['SITE_D35'] == 1)    
+    
+    malignant = data.loc[malignant]
+    benign = data.loc[benign]
+
+    malignant_dict = sample_iid(malignant, num_centers // 2)
+    benign_dict = sample_iid(benign, num_centers - num_centers // 2)
+
+    dict_center_idxs = {}
+    dict_center_idxs.update(malignant_dict)
+    dict_center_idxs.update(benign_dict)
+
+    return dict_center_idxs    
+
+
+
 class DatasetSplit(torch.utils.data.Dataset):
     # idxs in original data which belong to center 
     def __init__(self, features, labels, idxs):
