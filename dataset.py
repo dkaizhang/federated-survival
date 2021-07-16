@@ -18,10 +18,7 @@ def sample_iid(data, num_centers, start_center = 0):
     for i in range(num_centers):
         i = i + start_center
 
-        selected_idxs = list(rng.choice(all_idxs, num_items, replace=False))
-        
-        # rebase to the actual indices in data
-        dict_center_idxs[i] = set(data.iloc[selected_idxs].index)
+        dict_center_idxs[i] = set(rng.choice(all_idxs, num_items, replace=False))
         all_idxs = list(set(all_idxs) - dict_center_idxs[i])
     return dict_center_idxs    
 
@@ -30,25 +27,26 @@ def sample_by_quantiles(data, column, num_centers):
     """
     Randomly split data by age groups
     Arguments:
-    data -- combined data
-    column -- column on which to stratify
+    data -- combined data as numpy array
+    column -- column index on which to stratify
     num_centres -- number of centres to spread over    
     Returns:
     Dict with centre_id : indices of data assigned to centre
     """
 
-    dict_center_idxs = {}
+    data = data.T
+    dict_center_idxs, all_idxs = {}, np.array([i for i in range(len(data[column]))])
     quantile = 1 / num_centers
-    previous_idxs = set()
+    previous_idxs = torch.zeros(len(data[column]),dtype=torch.bool).numpy()
 
     for i in range(num_centers):
         if quantile > 1:
             ValueError
-        cutoff = data[column].quantile(quantile)
+        cutoff = np.quantile(data[column],quantile)
         selected_idxs = data[column] <= cutoff 
-        idxs_in_quantile = set(data.loc[selected_idxs].index) - previous_idxs
+        idxs_in_quantile = selected_idxs & ~previous_idxs
         previous_idxs = previous_idxs | idxs_in_quantile
-        dict_center_idxs[i] = idxs_in_quantile
+        dict_center_idxs[i] = all_idxs[idxs_in_quantile]
         quantile += 1 / num_centers 
 
     return dict_center_idxs    

@@ -3,7 +3,7 @@ import numpy as np
 import pandas as pd
 import torch
 
-from dataset import DatasetSplit, sample_iid
+from dataset import DatasetSplit, sample_by_quantiles, sample_iid
 from loss import negative_llh
 
 from pycox.models.interpolation import InterpolateLogisticHazard
@@ -119,7 +119,7 @@ class Federation():
     Accepts data, creates Members and distributes data
     Accepts a neural net and performs the training with the nll as loss function (set in Member)
     """
-    def __init__(self, features, labels, net, num_centers, optimizer, lr, batch_size=256, local_epochs=1, loss=negative_llh,  device=None, logger=SummaryWriter('./logs')):
+    def __init__(self, features, labels, net, num_centers, optimizer, lr, stratify_on=None, batch_size=256, local_epochs=1, loss=negative_llh,  device=None, logger=SummaryWriter('./logs')):
         self.features= features
         self.labels= labels
         self.global_model = net
@@ -130,6 +130,7 @@ class Federation():
         self.loss = loss
         self.logger = logger
         self.best_model = None
+        self.stratify_on = stratify_on
         self.set_device(device)
         self.set_members(features, labels, batch_size)
 
@@ -142,7 +143,10 @@ class Federation():
         self.global_model.to(self.device())
 
     def set_members(self, features, labels, batch_size):
-        dict_center_idxs = sample_iid(features, self.num_centers)
+        if self.stratify_on == None:
+            dict_center_idxs = sample_iid(features, self.num_centers)
+        else:
+            dict_center_idxs = sample_by_quantiles(features, self.stratify_on, self.num_centers)
         self.members = []
         for center_idx in range(self.num_centers):
             self.members.append(Member(self.optimizer, self.lr, features, labels, [0.9, 0.1, 0], 

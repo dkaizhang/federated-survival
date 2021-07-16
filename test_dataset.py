@@ -10,8 +10,8 @@ from dataset import sample_iid, sample_by_quantiles
 @pytest.mark.parametrize('centers', [2,5,10])
 def test_no_overlap_iid(seed,centers):
     N = 100
-    indicators = torch.randint(low=0, high=2, size=(N,6)).numpy()
-    data = pd.DataFrame(indicators, columns=['SITE_C71', 'SITE_C70', 'SITE_C72', 'SITE_D32', 'SITE_D33', 'SITE_D35'])
+    data = torch.randint(low=0, high=2, size=(N,6)).numpy()
+    # data = pd.DataFrame(indicators, columns=['SITE_C71', 'SITE_C70', 'SITE_C72', 'SITE_D32', 'SITE_D33', 'SITE_D35']).to_numpy()
     center_idxs = sample_iid(data, centers)
     idxs = []
     for key in center_idxs:
@@ -25,8 +25,8 @@ def test_no_overlap_iid(seed,centers):
 @pytest.mark.parametrize('start_center', [0,1,2])
 def test_keys_iid(seed,centers, start_center):
     N = 100
-    indicators = torch.randint(low=0, high=2, size=(N,6)).numpy()
-    data = pd.DataFrame(indicators, columns=['SITE_C71', 'SITE_C70', 'SITE_C72', 'SITE_D32', 'SITE_D33', 'SITE_D35'])
+    data = torch.randint(low=0, high=2, size=(N,6)).numpy()
+    # data = pd.DataFrame(indicators, columns=['SITE_C71', 'SITE_C70', 'SITE_C72', 'SITE_D32', 'SITE_D33', 'SITE_D35'])
     center_idxs = sample_iid(data, centers, start_center=start_center)
     for i, k in enumerate(center_idxs.keys()):
         assert(int(k) == i + start_center)
@@ -36,9 +36,9 @@ def test_keys_iid(seed,centers, start_center):
 @pytest.mark.parametrize('centers', [2,5,10])
 def test_keys_quantile(seed,centers):
     N = 100
-    ages = torch.rand(size=(N,1)).numpy()
-    data = pd.DataFrame(ages, columns=['AGE'])
-    center_idxs = sample_by_quantiles(data, 'AGE', centers)
+    data = torch.rand(size=(N,3)).numpy()
+    age_col = 1
+    center_idxs = sample_by_quantiles(data, age_col, centers)
     all_centers = [i for i in range(centers)]
     for i, k in enumerate(center_idxs.keys()):
         assert(int(k) == all_centers[i])
@@ -48,15 +48,17 @@ def test_keys_quantile(seed,centers):
 @pytest.mark.parametrize('centers', [2,5,10])
 def test_no_overlap_quantile(seed,centers):
     N = 100
-    ages = torch.rand(size=(N,1)).numpy()
-    data = pd.DataFrame(ages, columns=['AGE'])
-    center_idxs = sample_by_quantiles(data, 'AGE', centers)
+    data = torch.rand(size=(N,3)).numpy()
+    age_col = 1
+    center_idxs = sample_by_quantiles(data, age_col, centers)
+
     idxs = []
     prev_max = 0
     for key in center_idxs:
         idxs = idxs + list(center_idxs[key])
-        assert(data.loc[center_idxs[key]].to_numpy().max() > prev_max)
-        prev_max = data.loc[center_idxs[key]].to_numpy().max()
+        m = data.T[age_col][center_idxs[key]].max()
+        assert(m > prev_max)
+        prev_max = m
     assert(len(idxs) == len(set(idxs))) 
     assert(len(idxs) == N) 
     
