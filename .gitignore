@@ -16,3 +16,4 @@ logs/
 checkpoints/
 figs/
 *.txt
+lifelines.ipynb
