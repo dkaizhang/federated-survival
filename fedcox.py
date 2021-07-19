@@ -162,7 +162,7 @@ class Federation():
     def get_members(self):
         return self.members
 
-    def fit(self, epochs=1, patience=3, print_every=2, verbose=False):
+    def fit(self, epochs=1, patience=3, print_every=2, take_best=True, verbose=False):
         self.global_model.train()
 
         train_loss = []
@@ -170,6 +170,8 @@ class Federation():
 
         epochs_no_improve = 0
         min_val_loss = 100000
+
+        model_from_round = 0
         
         for epoch in range(epochs):
             local_weights, local_losses = [], []
@@ -202,19 +204,23 @@ class Federation():
                 print(f'Training loss : {train_loss[-1]}')
                 print(f'Validation loss : {val_loss[-1]}') 
 
-            if val_loss_avg < min_val_loss:
+            if val_loss_avg < min_val_loss and take_best:
+                model_from_round = epoch + 1
                 self.best_model = global_weights
                 min_val_loss = val_loss_avg
                 epochs_no_improve = 0
+            elif not take_best:
+                model_from_round = epoch + 1
+                self.best_model = global_weights
             else:
                 epochs_no_improve += 1
                 if epochs_no_improve > patience:
-                    print(f'Early stop at epoch {epoch+1}')
+                    print(f'Early stop at epoch {epoch+1}, model from round {model_from_round}')
                     torch.save(self.best_model, '.best_model.pt')
                     return epoch + 1
             val_loss.append(val_loss_avg)
 
-        print('Epochs exhausted')
+        print(f'Epochs exhausted, model from round {model_from_round}')
         torch.save(self.best_model, '.best_model.pt')
         return epochs
 
