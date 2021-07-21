@@ -17,3 +17,4 @@ checkpoints/
 figs/
 *.txt
 lifelines.ipynb
+color.ipynb
