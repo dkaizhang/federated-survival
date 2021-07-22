@@ -36,6 +36,7 @@ class Member():
         self.batch_size = batch_size
         self.device = device
         self.loss = loss
+        self.train_losses = []
         self.val_losses = []
         self.trainloader, self.validloader, self.testloader = self.train_val_test(features, labels, split, list(idxs))
 
@@ -88,7 +89,7 @@ class Member():
             epoch_loss.append(sum(batch_loss)/len(batch_loss))
 
             self.val_losses.append(self.get_loss(model, validate=True))
-
+            self.train_losses.append(sum(epoch_loss) / len(epoch_loss))
         return model.state_dict(), sum(epoch_loss) / len(epoch_loss)
 
     def get_loss(self, model, validate=True):
@@ -137,8 +138,10 @@ class Federation():
         self.lr = lr
         self.local_epochs = local_epochs
         self.loss = loss
-        self.val_losses = []
+        self.local_val_losses = []
         self.global_val_losses = []
+        self.local_train_losses = []
+        self.global_train_losses = []
         self.logger = logger
         self.best_model = None
         self.stratify_on = stratify_on
@@ -172,7 +175,6 @@ class Federation():
     def fit(self, epochs=1, patience=3, print_every=2, take_best=True, verbose=False):
         self.global_model.train()
 
-        train_loss = []
         val_loss = []
 
         epochs_no_improve = 0
@@ -194,7 +196,8 @@ class Federation():
             self.global_model.load_state_dict(global_weights)
 
             loss_avg = sum(local_losses) / len(local_losses)
-            train_loss.append(loss_avg)
+
+            self.global_train_losses.append(loss_avg)
 
             # val loss of global model on local data
             local_val_losses = []
@@ -208,7 +211,7 @@ class Federation():
             # print global training loss after every 'i' rounds
             if (epoch+1) % print_every == 0:
                 print(f' \Latest training stats after {epoch+1} global rounds:')
-                print(f'Training loss : {train_loss[-1]}')
+                print(f'Training loss : {self.global_train_losses[-1]}')
                 print(f'Validation loss : {val_loss[-1]}') 
 
             if val_loss_avg < min_val_loss and take_best:
@@ -226,7 +229,8 @@ class Federation():
                     torch.save(self.best_model, '.best_model.pt')
                     # get the local losses of each member based on their own model and data
                     for member in self.members:
-                        self.val_losses.append(member.val_losses)
+                        self.local_val_losses.append(member.val_losses)
+                        self.local_train_losses.append(member.train_losses)
                     return epoch + 1
             val_loss.append(val_loss_avg)
 
@@ -234,7 +238,8 @@ class Federation():
         torch.save(self.best_model, '.best_model.pt')
         # get the local losses of each member based on their own model and data
         for member in self.members:
-            self.val_losses.append(member.val_losses)
+            self.local_val_losses.append(member.val_losses)
+            self.local_train_losses.append(member.train_losses)
         return epochs
 
     def predict_hazard(self, input=None):
