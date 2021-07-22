@@ -18,3 +18,4 @@ figs/
 *.txt
 lifelines.ipynb
 color.ipynb
+*.npy
