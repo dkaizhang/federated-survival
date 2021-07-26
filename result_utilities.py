@@ -84,3 +84,20 @@ def extract_stats(files):
             avg_briers.append(np.mean(brs))
             std_briers.append(np.std(concs))
     return indiv_rounds, avg_rounds, std_rounds, indiv_concordances, avg_concordances, std_concordances, indiv_briers, avg_briers, std_briers
+
+def extract_lr(files):
+    lrs = []
+
+    for file in files:
+        with open(file, 'r') as f:
+            # print(file)
+            lines = f.read().splitlines()
+            line_pos = [2]
+
+            for lp in line_pos:
+                line = lines[-lp] 
+                start = line.find('LR = ') + len('LR = ')
+                end = line.find(', dropout')
+                lr = float(line[start:end])
+                lrs.append(lr)
+    return lrs
