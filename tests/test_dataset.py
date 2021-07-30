@@ -9,8 +9,8 @@ from sklearn_pandas import DataFrameMapper
 from sklearn.preprocessing import StandardScaler
 from sklearn.preprocessing import MinMaxScaler
 
-from dataset import sample_iid, sample_by_quantiles
-from load import read_csv
+from model.dataset import sample_iid, sample_by_quantiles
+from model.load import read_csv
 
 
 @pytest.mark.parametrize('seed', [0,2,4])

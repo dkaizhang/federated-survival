@@ -2,7 +2,7 @@ import numpy as np
 import pytest
 import torch
 
-from loss import negative_llh
+from model.loss import negative_llh
 from pycox.models.loss import nll_logistic_hazard
 
 @pytest.mark.parametrize('seed', [0,2,4])

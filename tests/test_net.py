@@ -3,8 +3,8 @@ import pytest
 import torch
 
 from copy import deepcopy
-from loss import negative_llh
-from net import MLP, CoxPH, MLPPH, PHBlock
+from model.loss import negative_llh
+from model.net import MLP, CoxPH, MLPPH, PHBlock
 
 @pytest.mark.parametrize('dim_out', [1,5,15])
 @pytest.mark.parametrize('seed', [0,2,4])

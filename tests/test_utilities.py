@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from utilities import get_cumulative, get_indicator, add_aggregate
+from utilities.utilities import get_cumulative, get_indicator, add_aggregate
 
 # get cumulative
 @pytest.fixture

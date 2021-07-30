@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from discretiser import Discretiser
+from model.discretiser import Discretiser
 from pycox.preprocessing.label_transforms import LabTransDiscreteTime
 
 @pytest.mark.parametrize('seed', [0,2,4])
