@@ -19,3 +19,4 @@ figs/
 lifelines.ipynb
 color.ipynb
 *.npy
+model.ipynb
