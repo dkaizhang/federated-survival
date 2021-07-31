@@ -3,10 +3,9 @@ import numpy as np
 import pandas as pd
 import torch
 
-from dataset import DatasetSplit, sample_by_quantiles, sample_iid
-from loss import negative_llh
+from model.dataset import DatasetSplit, sample_by_quantiles, sample_iid
+from model.loss import negative_llh
 
-from pycox.models.interpolation import InterpolateLogisticHazard
 from tensorboardX import SummaryWriter
 from torch.utils.data import DataLoader
 
