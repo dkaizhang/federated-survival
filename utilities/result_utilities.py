@@ -1,9 +1,9 @@
 import numpy as np
 
 def get_filepath(dura):
-    path1 = f'./{dura}/coxph-{dura}'
-    path2 = f'./{dura}/nnph-{dura}'
-    path3 = f'./{dura}/nnnph-{dura}'
+    path1 = f'../{dura}/coxph-{dura}'
+    path2 = f'../{dura}/nnph-{dura}'
+    path3 = f'../{dura}/nnnph-{dura}'
     paths = [path1, path2, path3]
     model = ['coxph', 'NNph', 'NNnph']
     files = []
