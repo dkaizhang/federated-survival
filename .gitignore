@@ -1,6 +1,7 @@
 *.pdf
 *.xlsx
 flenv/
+data/
 Data/
 .DS_Store
 .ipynb_checkpoints/
