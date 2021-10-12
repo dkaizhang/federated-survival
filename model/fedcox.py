@@ -37,6 +37,7 @@ class Member():
         self.loss = loss
         self.train_losses = []
         self.val_losses = []
+        print(len(list(idxs)))
         self.trainloader, self.validloader, self.testloader = self.train_val_test(features, labels, split, list(idxs))
 
 
@@ -127,7 +128,7 @@ class Federation():
     Accepts data, creates Members and distributes data
     Accepts a neural net and performs the training with the nll as loss function (set in Member)
     """
-    def __init__(self, features, labels, net, num_centers, optimizer, lr, stratify_on=None, stratify_labels=False, batch_size=256, local_epochs=1, loss=negative_llh,  device=None, logger=SummaryWriter('./logs')):
+    def __init__(self, features, labels, net, num_centers, optimizer, lr, stratify_on=None, stratify_labels=False, batch_size=256, local_epochs=1, loss=negative_llh,  device=None, logger=SummaryWriter('./logs'), df_t=None):
         self.features= features
         self.labels= labels
         self.global_model = net
@@ -145,6 +146,7 @@ class Federation():
         self.best_model = None
         self.stratify_on = stratify_on
         self.stratify_labels = stratify_labels
+        self.df_t = df_t
         self.set_device(device)
         self.set_members(features, labels, batch_size)
 
@@ -160,9 +162,9 @@ class Federation():
         if self.stratify_on == None:
             dict_center_idxs = sample_iid(features, self.num_centers)
         elif self.stratify_labels:
-            dict_center_idxs = sample_by_quantiles(labels, self.stratify_on, self.num_centers)
+            dict_center_idxs = sample_by_quantiles(labels, self.stratify_on, self.num_centers, self.df_t)
         else:
-            dict_center_idxs = sample_by_quantiles(features, self.stratify_on, self.num_centers)
+            dict_center_idxs = sample_by_quantiles(features, self.stratify_on, self.num_centers, self.df_t)
         self.members = []
         for center_idx in range(self.num_centers):
             self.members.append(Member(self.optimizer, self.lr, features, labels, [0.9, 0.1, 0], 

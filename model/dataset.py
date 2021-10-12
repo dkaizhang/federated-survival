@@ -23,7 +23,7 @@ def sample_iid(data, num_centers, start_center = 0):
     return dict_center_idxs    
 
 
-def sample_by_quantiles(data, column, num_centers):
+def sample_by_quantiles(data, column, num_centers, df_t):
     """
     Randomly split data by age groups
     Arguments:
@@ -33,10 +33,15 @@ def sample_by_quantiles(data, column, num_centers):
     Returns:
     Dict with centre_id : indices of data assigned to centre
     """
-    if type(data) is tuple:
-        data = data[column]
+    # problematic - needs to be refactored
+    # essentially passing in the original durations, so that we get even splits
+    if True:
+        data = df_t
     else:
-        data = data.T[column]
+        if type(data) is tuple:
+            data = data[column]
+        else:
+            data = data.T[column]
     dict_center_idxs, all_idxs = {}, np.array([i for i in range(len(data))])
     quantile = 1 / num_centers
     previous_idxs = torch.zeros(len(data),dtype=torch.bool).numpy()
@@ -50,6 +55,7 @@ def sample_by_quantiles(data, column, num_centers):
         previous_idxs = previous_idxs | idxs_in_quantile
         dict_center_idxs[i] = all_idxs[idxs_in_quantile]
         quantile += 1 / num_centers 
+        print(np.sum(idxs_in_quantile))
 
     return dict_center_idxs    
 
