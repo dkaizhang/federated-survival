@@ -18,6 +18,24 @@ def get_filepath(dura):
                 files.append(file)
     return files
 
+def get_filepath_additional(dura):
+    path1 = f'../{dura}/CoxPH'
+    path2 = f'../{dura}/NNph'
+    path3 = f'../{dura}/NNnph'
+    paths = [path1, path2, path3]
+    model = ['CoxPH', 'NNph', 'NNnph']
+    files = []
+    for i, path in enumerate(paths):
+        cases = ['central','iid','noniid']
+        strats = [None, None, 0]
+        centers = [1,4,4]
+        rounds = [[1], [1,5,20,100], [1,5,20,100]]
+        for j, case in enumerate(cases):  
+            for rnd in rounds[j]:
+                file = f'{path}/training_log_M{model[i]}C{case}S{strats[j]}C{centers[j]}L{rnd}.txt'
+                files.append(file)
+    return files
+
 def extract_figures(files):
     concordances = []
     briers = []
@@ -53,8 +71,8 @@ def extract_stats(files):
         with open(file, 'r') as f:
             # print(file)
             lines = f.read().splitlines()
-            line_pos = [2,4,6,8,10]
-
+            # line_pos = [2,4,6,8,10]
+            line_pos = [2,8,14,20,26]
             concs = []
             brs = []
             rounds = []
@@ -68,8 +86,8 @@ def extract_stats(files):
                 br = float(line[start:start+end])
                 brs.append(br)
                 start = line.find('from round ') + len('from round ') 
-                end = 3     
-                if line[start:start+end][-1] == '-':
+                end = 2     
+                if line[start:start+end][-1] == ':':
                     rnd = int(line[start:start+end-1])
                 else:
                     rnd = int(line[start:start+end])
@@ -82,7 +100,7 @@ def extract_stats(files):
             std_concordances.append(np.std(concs))
             indiv_briers.append(brs)
             avg_briers.append(np.mean(brs))
-            std_briers.append(np.std(concs))
+            std_briers.append(np.std(brs))
     return indiv_rounds, avg_rounds, std_rounds, indiv_concordances, avg_concordances, std_concordances, indiv_briers, avg_briers, std_briers
 
 def extract_lr(files):
