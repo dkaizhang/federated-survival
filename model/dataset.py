@@ -43,6 +43,8 @@ def sample_by_quantiles(data, column, num_centers):
     quantile = 1 / num_centers
     previous_idxs = torch.zeros(len(data),dtype=torch.bool).numpy()
 
+    print('Available: ',len(data))
+
     for i in range(num_centers):
         if quantile > 1:
             ValueError
