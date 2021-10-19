@@ -52,7 +52,7 @@ def sample_by_quantiles(data, column, num_centers):
         previous_idxs = previous_idxs | idxs_in_quantile
         dict_center_idxs[i] = all_idxs[idxs_in_quantile]
         quantile += 1 / num_centers 
-        print(np.sum(idxs_in_quantile))
+        # print(np.sum(idxs_in_quantile))
 
     return dict_center_idxs    
 
