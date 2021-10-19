@@ -148,7 +148,7 @@ class Federation():
         self.stratify_on = stratify_on
         self.stratify_labels = stratify_labels
         self.set_device(device)
-        self.set_members(features, raw_labels, batch_size)
+        self.set_members(features, labels, batch_size)
 
     def device(self):
         return self._device
@@ -162,7 +162,9 @@ class Federation():
         if self.stratify_on == None:
             dict_center_idxs = sample_iid(features, self.num_centers)
         elif self.stratify_labels:
-            dict_center_idxs = sample_by_quantiles(labels, self.stratify_on, self.num_centers)
+            # using raw labels instead of discretised labels
+            dict_center_idxs = sample_by_quantiles(self.raw_labels, self.stratify_on, self.num_centers)
+            # dict_center_idxs = sample_by_quantiles(labels, self.stratify_on, self.num_centers)
         else:
             dict_center_idxs = sample_by_quantiles(features, self.stratify_on, self.num_centers)
         self.members = []
