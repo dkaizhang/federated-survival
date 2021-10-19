@@ -128,9 +128,10 @@ class Federation():
     Accepts data, creates Members and distributes data
     Accepts a neural net and performs the training with the nll as loss function (set in Member)
     """
-    def __init__(self, features, labels, net, num_centers, optimizer, lr, stratify_on=None, stratify_labels=False, batch_size=256, local_epochs=1, loss=negative_llh,  device=None, logger=SummaryWriter('./logs')):
+    def __init__(self, features, labels, net, num_centers, optimizer, lr, stratify_on=None, stratify_labels=False, batch_size=256, local_epochs=1, loss=negative_llh,  device=None, logger=SummaryWriter('./logs'), raw_labels=None):
         self.features= features
         self.labels= labels
+        self.raw_labels = raw_labels
         self.global_model = net
         self.num_centers = num_centers
         self.optimizer = optimizer
@@ -147,7 +148,7 @@ class Federation():
         self.stratify_on = stratify_on
         self.stratify_labels = stratify_labels
         self.set_device(device)
-        self.set_members(features, labels, batch_size)
+        self.set_members(features, raw_labels, batch_size)
 
     def device(self):
         return self._device
