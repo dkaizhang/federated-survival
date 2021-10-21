@@ -1,7 +1,7 @@
 *.pdf
 *.xlsx
 flenv/
-Data/_old
+Data/*
 .DS_Store
 .ipynb_checkpoints/
 .vscode/
@@ -16,6 +16,8 @@ logs/
 checkpoints/
 figs/
 *.txt
+!requirements.txt
+!Data/README.txt
 lifelines.ipynb
 color.ipynb
 *.npy
