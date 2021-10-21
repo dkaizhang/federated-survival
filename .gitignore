@@ -1,8 +1,7 @@
 *.pdf
 *.xlsx
 flenv/
-data/
-Data/
+Data/_old
 .DS_Store
 .ipynb_checkpoints/
 .vscode/
