@@ -1,11 +1,11 @@
 import numpy as np
 
 def get_filepath(dura):
-    path1 = f'../{dura}/coxph-{dura}'
-    path2 = f'../{dura}/nnph-{dura}'
-    path3 = f'../{dura}/nnnph-{dura}'
+    path1 = f'../{dura}/CoxPH'
+    path2 = f'../{dura}/NNph'
+    path3 = f'../{dura}/NNnph'
     paths = [path1, path2, path3]
-    model = ['coxph', 'NNph', 'NNnph']
+    model = ['CoxPH', 'NNph', 'NNnph']
     files = []
     for i, path in enumerate(paths):
         cases = ['central','iid','noniid']
