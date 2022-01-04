@@ -1,6 +1,6 @@
 *.pdf
 *.xlsx
-flenv/
+env/
 Data/*
 .DS_Store
 .ipynb_checkpoints/
