@@ -9,7 +9,7 @@ from pycox.evaluation import EvalSurv
 from model.fedcox import Federation
 from model.interpolate import surv_const_pdf_df
 from model.load import read_csv
-from model.net import MLP, MLPPH, CoxPH
+from net import MLP, MLPPH, CoxPH
 
 from src.data import load_data, get_standardiser, data_transform, train_val_split, Dataset, sample_by_quantiles
 from src.discretiser import Discretiser
