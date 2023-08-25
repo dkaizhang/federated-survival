@@ -2,6 +2,22 @@ import torch
 
 from torch import nn
 
+def load_model(model_type, dim_in, dim_out, model_path=None):
+    
+    num_nodes = [32, 32]
+    if model_type == 'NNnph':   
+        net = MLP(dim_in=dim_in, num_nodes=num_nodes, dim_out=dim_out)    
+    if model_type == 'CoxPH':            
+        net = CoxPH(dim_in=dim_in, dim_out=dim_out)
+    if model_type == 'NNph':
+        net = MLPPH(dim_in=dim_in, num_nodes=num_nodes, dim_out=dim_out)
+    else:
+        ValueError
+
+    if model_path is not None:
+        net.load_state_dict(torch.load(model_path))
+
+
 class DenseBlock(nn.Module):
     def __init__(self, dim_in, dim_out, bias=True, batch_norm=True, dropout=0, activation=nn.ReLU, 
                     w_init_=lambda w: nn.init.kaiming_normal_(w, nonlinearity='relu')):
