@@ -7,6 +7,7 @@ from Data.data_sim import SimStudyNonLinearNonPHSquared
 from Data.data_sim import SimStudyNonLinearNonPHCubed
 from Data.data_sim import SimStudyNonLinearNonPHAll
 from pycox import datasets
+from src.discretiser import Discretiser
 from sklearn.compose import ColumnTransformer
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.preprocessing import StandardScaler
@@ -14,7 +15,27 @@ from sklearn.preprocessing import StandardScaler
 # TODO refac this out
 rng = np.random.default_rng(123)
 
-def load_data(dataset):
+class TabularSurvivalDataset(torch.utils.data.Dataset):
+    def __init__(self, features, labels):
+        self.features = features
+        self.durations = labels[0]
+        self.events = labels[1]
+
+    def __getitem__(self, index):
+        return self.features[index], self.durations[index], self.events[index]
+       
+    def __len__(self):
+        return len(self.events)
+
+# splits DataFrame into two
+def train_test_split(data, test_split, seed):
+
+    test = data.sample(frac=test_split, random_state=seed)
+    train = data.drop(test.index)
+
+    return train, test
+
+def load_data(dataset, num_durations, seed):
 
     if dataset == 'metabric':
         data = datasets.metabric.read_df()
@@ -33,6 +54,22 @@ def load_data(dataset):
         data = data.drop(columns=['duration_true','event_true','censoring_true']) 
 
     data = data.astype({'event' : int})
+    train_data, test_data = train_test_split(data, test_split=0.1, seed=seed)
+    train_data, val_data = train_test_split(train_data, test_split=0.1, seed=seed)
+
+    all_cols, x_mapper = get_standardiser(dataset)
+    discretiser = Discretiser(num_durations, scheme='km') 
+
+    train_data_trans = data_transform(train_data, all_cols, x_mapper, discretiser, fit_transform=True)
+    val_data_trans = data_transform(val_data, all_cols, x_mapper, discretiser, fit_transform=False)
+    test_data_trans = data_transform(test_data, all_cols, x_mapper, discretiser, fit_transform=False)
+
+    # using transformed labels for training only
+    train = TabularSurvivalDataset(features=train_data_trans[all_cols], labels=(train_data_trans.duration.values, train_data_trans.event.values))
+    val = TabularSurvivalDataset(features=val_data_trans[all_cols], labels=(val_data.duration.values, val_data.event.values))
+    test = TabularSurvivalDataset(features=test_data_trans[all_cols], labels=(test_data.duration.values, test_data.event.values))
+
+    return train, val, test
 
 def get_standardiser(dataset):
 
@@ -53,16 +90,6 @@ def get_standardiser(dataset):
         cols_minmax = ['x0', 'x1', 'x2']
         cols_leave = []
 
-    # flchain
-    # cols_standardise = []
-    # cols_minmax = ['age','sample.yr','kappa','lambda','flc.grp','creatinine']
-    # cols_leave = ['mgus','sex']
-
-    # simulacrum
-    # cols_standardise = ['GRADE', 'AGE', 'QUINTILE_2015', 'NORMALISED_HEIGHT', 'NORMALISED_WEIGHT']
-    # cols_minmax = ['SEX', 'TUMOUR_COUNT', 'REGIMEN_COUNT']
-    # cols_leave = ['SACT', 'CLINICAL_TRIAL_INDICATOR', 'CHEMO_RADIATION_INDICATOR','BENIGN_BEHAVIOUR','SITE_C70', 'SITE_C71', 'SITE_C72', 'SITE_D32','SITE_D33','SITE_D35','CREG_L0201','CREG_L0301','CREG_L0401','CREG_L0801','CREG_L0901','CREG_L1001','CREG_L1201','CREG_L1701','LAT_9','LAT_B','LAT_L','LAT_M','LAT_R','ETH_A','ETH_B','ETH_C','ETH_M','ETH_O','ETH_U','ETH_W','DAYS_TO_FIRST_SURGERY']
-
     all_cols = cols_standardise + cols_minmax + cols_leave
     standardise = [(f'standard{i}',StandardScaler(), [col]) for i,col in enumerate(cols_standardise)]
     leave = [(f'leave{i}','passthrough',[col]) for i,col in enumerate(cols_leave)]
@@ -75,8 +102,8 @@ def get_standardiser(dataset):
 
 """
 Argument:
-x - DataFrame of features
-y - tuple of (durations, events)
+data - DataFrame of features and labels
+all_cols - List of all features
 x_mapper - ColumnTransformer for all features
 discretiser - Discretiser to be applied to y
 fit_transform - for x_mapper and discretiser on x and y respectively 
@@ -84,7 +111,10 @@ Returns:
 x_trans - 
 y_trans - tuple of (discretised durations, events)
 """
-def data_transform(x, y, x_mapper, discretiser, fit_transform=True):
+def data_transform(data, all_cols, x_mapper, discretiser, fit_transform=True):
+
+    x = data[all_cols]
+    y = (data.duration.values, data.event.values)
 
     if fit_transform:
         x_trans = x_mapper.fit_transform(x).astype('float32')
@@ -120,6 +150,7 @@ def train_val_split(df, t_index, v_index, feature_headers):
     y_val = (df_val.duration.values, df_val.event.values)
 
     return x_train, y_train, x_val, y_val
+
 
 def sample_iid(data, num_centers, start_center = 0):
     """
@@ -175,31 +206,6 @@ def sample_by_quantiles(data, column, num_centers):
 
     return dict_center_idxs    
 
-# need to deal with those who have both benign and malignant tumour
-# def sample_benign_malignant(data, num_centers):
-#     """
-#     Split data between benign and malignant tumours then distribute across each centre
-#     Arguments:
-#     data -- combined data
-#     num_centres -- number of centres to spread over    
-#     Returns:
-#     Dict with centre_id : indices of data assigned to centre
-#     """
-#     malignant = (data['SITE_C71'] == 1) | (data['SITE_C70'] == 1) | (data['SITE_C72'] == 1)
-#     benign = (data['SITE_D32'] == 1) | (data['SITE_D33'] == 1) | (data['SITE_D35'] == 1)    
-    
-#     malignant = data.loc[malignant]
-#     benign = data.loc[benign]
-
-#     malignant_dict = sample_iid(malignant, num_centers // 2)
-#     benign_dict = sample_iid(benign, num_centers - num_centers // 2, start_center = num_centers // 2)
-
-#     dict_center_idxs = {}
-#     dict_center_idxs.update(malignant_dict)
-#     dict_center_idxs.update(benign_dict)
-
-#     return dict_center_idxs    
-
 class DatasetSplit(torch.utils.data.Dataset):
     # idxs in original data which belong to center 
     def __init__(self, features, labels, idxs):
@@ -217,14 +223,3 @@ class DatasetSplit(torch.utils.data.Dataset):
     def __len__(self):
         return len(self.idxs)
 
-class Dataset(torch.utils.data.Dataset):
-    def __init__(self, features, labels):
-        self.features = features
-        self.durations = labels[0]
-        self.events = labels[1]
-
-    def __getitem__(self, index):
-        return self.features[index], self.durations[index], self.events[index]
-       
-    def __len__(self):
-        return len(self.events)
