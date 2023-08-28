@@ -8,7 +8,7 @@ batch_size: 32
 optimizer: SGD
 lr: 1.0e-4
 num_workers: 1
-device: 'cpu'
+device: 0
 stratify: 'iid'
 out_dir: 'runs_test'
 seed: 0
