@@ -1,14 +1,16 @@
-import argparse
+import torch
 import yaml
 
+from argparse import ArgumentParser
 from src.data import load_data, stratify_data
 from src.net import load_model
 from src.trainer import Trainer
 from src.utils import get_summarywriter
 
 def parse_args():
-    parser = argparse.ArgumentParser()
+    parser = ArgumentParser()
     parser.add_argument('--config', type=str, default='config.yaml', help='Path to config file')
+    return parser.parse_args()
 
 def main(args):
 
@@ -19,12 +21,20 @@ def main(args):
     dict_center_idxs = stratify_data(dataset=config['dataset'], split='train', strategy=config['stratify'], num_centers=config['num_centers'], seed=config['seed'])
     val_dict_center_idxs = stratify_data(dataset=config['dataset'], split='val', strategy=config['stratify'], num_centers=config['num_centers'], seed=config['seed'])
 
-    # check that shape[1] is correct
-    model = load_model(model_type=config['model_type'], dim_in=train[0][0].shape[1], dim_out=config['num_durations'],model_path=None)
+    device = f"cuda:{config['device']}" if torch.cuda.is_available() else "cpu"
+    model = load_model(model_type=config['model_type'], dim_in=train[0][0].shape[0], dim_out=config['num_durations'],model_path=None)
 
     writer = get_summarywriter(out_dir=config['out_dir'])
-    trainer = Trainer(epochs=config['epochs'], local_epochs=config['local_epochs'], batch_size=config['batch_size'], num_workers=config['num_workers'], seed=config['seed'], writer=writer)
-    
+    trainer = Trainer(num_centers=config['num_centers'], 
+                        epochs=config['epochs'], 
+                        local_epochs=config['local_epochs'], 
+                        batch_size=config['batch_size'], 
+                        optimizer=config['optimizer'],
+                        lr=config['lr'],
+                        num_workers=config['num_workers'], 
+                        device=device,
+                        seed=config['seed'], 
+                        writer=writer)
     trainer.fit(model, train, dict_center_idxs, val, val_dict_center_idxs)
 
     # # cut
