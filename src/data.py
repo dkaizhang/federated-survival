@@ -135,8 +135,13 @@ def data_transform(data, all_cols, x_mapper, discretiser, fit_transform=True):
 
     return x_trans, y_trans
 
-def stratify_data(dataset, strategy, num_centers, seed):
-    raw_data, _, _ = load_raw_data(dataset, seed) 
+def stratify_data(dataset, split, strategy, num_centers, seed):
+    raw_train_data, raw_val_data, raw_test_data = load_raw_data(dataset, seed) 
+
+    if split == 'train':
+        raw_data = raw_train_data
+    elif split == 'val':
+        raw_data = raw_val_data
 
     if strategy == 'iid':
         dict_center_idxs = sample_iid(raw_data, num_centers)
