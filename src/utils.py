@@ -1,7 +1,6 @@
 import os
 import pandas as pd
 import socket
-import torch
 
 from datetime import datetime
 from torch.utils.tensorboard import SummaryWriter
@@ -14,19 +13,24 @@ def get_summarywriter(out_dir):
     )
     return SummaryWriter(log_dir=log_dir)
 
-def predict_hazard(model, input=None):
+def predict_hazard(model, data, device):
     model.to(device)
     model.eval()
-    loader = input if not None else self.testloader 
-    hazard = torch.cat([model(data[0].to(device)).sigmoid() for data in loader], axis=0)         
+
+    x, durations, events = data
+    x = x.to(device)
+    durations = durations.to(device)
+    events = events.to(device)
+
+    hazard = model(x).sigmoid()         
     model.train()
     return hazard
 
-def predict_surv(model, input=None):
-    hazard = predict_hazard(model, input)
+def predict_surv(model, data):
+    hazard = predict_hazard(model, data)
     surv = (1 - hazard).log().cumsum(1).exp()
     return surv.cpu().detach().numpy()
 
-def predict_surv_df(model, cuts, input=None):
-    surv = predict_surv(model, input)
+def predict_surv_df(model, data, cuts):
+    surv = predict_surv(model, data)
     return pd.DataFrame(surv.transpose(), cuts)
