@@ -35,8 +35,7 @@ def train_test_split(data, test_split, seed):
 
     return train, test
 
-def load_data(dataset, num_durations, seed):
-
+def load_raw_data(dataset, seed):
     if dataset == 'metabric':
         data = datasets.metabric.read_df()
     elif dataset == 'support':
@@ -56,6 +55,12 @@ def load_data(dataset, num_durations, seed):
     data = data.astype({'event' : int})
     train_data, test_data = train_test_split(data, test_split=0.1, seed=seed)
     train_data, val_data = train_test_split(train_data, test_split=0.1, seed=seed)
+    
+    return train_data, val_data, test_data
+
+def load_data(dataset, num_durations, seed):
+
+    train_data, val_data, test_data = load_raw_data(dataset, seed)
 
     all_cols, x_mapper = get_standardiser(dataset)
     discretiser = Discretiser(num_durations, scheme='km') 
@@ -130,6 +135,20 @@ def data_transform(data, all_cols, x_mapper, discretiser, fit_transform=True):
 
     return x_trans, y_trans
 
+def stratify_data(dataset, strategy, num_centers, seed):
+    raw_data, _, _ = load_raw_data(dataset, seed) 
+
+    if strategy == 'iid':
+        dict_center_idxs = sample_iid(raw_data, num_centers)
+    elif strategy == 'labels':
+        # using raw labels instead of discretised labels
+        dict_center_idxs = sample_by_quantiles(raw_data, "duration", num_centers)
+    else:
+        print('not implemented')
+        exit(0)
+
+    return dict_center_idxs
+
 """
 Argument:
 df - simple DataFrame with all features and labels 
@@ -182,11 +201,9 @@ def sample_by_quantiles(data, column, num_centers):
     Dict with centre_id : indices of data assigned to centre
     """
     
-    # labels are tuples, features are DFs
-    if type(data) is tuple: 
-        data = data[column]
-    else:
-        data = data.T[column]
+    # TODO check this is correct - e.g. data['duration']
+    data = data[column]
+
     dict_center_idxs, all_idxs = {}, np.array([i for i in range(len(data))])
     quantile = 1 / num_centers
     previous_idxs = torch.zeros(len(data),dtype=torch.bool).numpy()
