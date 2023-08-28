@@ -25,7 +25,7 @@ class TabularSurvivalDataset(torch.utils.data.Dataset):
         return self.features[index], self.durations[index], self.events[index]
        
     def __len__(self):
-        return len(self.events)
+        return len(self.features)
 
 # splits DataFrame into two
 def train_test_split(data, test_split, seed):
@@ -65,14 +65,14 @@ def load_data(dataset, num_durations, seed):
     all_cols, x_mapper = get_standardiser(dataset)
     discretiser = Discretiser(num_durations, scheme='km') 
 
-    train_data_trans = data_transform(train_data, all_cols, x_mapper, discretiser, fit_transform=True)
-    val_data_trans = data_transform(val_data, all_cols, x_mapper, discretiser, fit_transform=False)
-    test_data_trans = data_transform(test_data, all_cols, x_mapper, discretiser, fit_transform=False)
+    train_x_trans, train_y_trans = data_transform(train_data, all_cols, x_mapper, discretiser, fit_transform=True)
+    val_x_trans, val_y_trans = data_transform(val_data, all_cols, x_mapper, discretiser, fit_transform=False)
+    test_x_trans, test_y_trans = data_transform(test_data, all_cols, x_mapper, discretiser, fit_transform=False)
 
     # using transformed labels for training only
-    train = TabularSurvivalDataset(features=train_data_trans[all_cols], labels=(train_data_trans.duration.values, train_data_trans.event.values))
-    val = TabularSurvivalDataset(features=val_data_trans[all_cols], labels=(val_data.duration.values, val_data.event.values))
-    test = TabularSurvivalDataset(features=test_data_trans[all_cols], labels=(test_data.duration.values, test_data.event.values))
+    train = TabularSurvivalDataset(features=train_x_trans, labels=train_y_trans)
+    val = TabularSurvivalDataset(features=val_x_trans, labels=(val_data.duration.values, val_data.event.values))
+    test = TabularSurvivalDataset(features=test_x_trans, labels=(test_data.duration.values, test_data.event.values))
 
     return train, val, test
 
