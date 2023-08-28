@@ -1,5 +1,4 @@
 import copy
-import numpy as np
 import os
 import torch
 
@@ -22,9 +21,6 @@ class Trainer():
         self.seed = seed
         self.writer = writer
 
-    def test(self, test, test_by_center):
-        pass
-
     def average_weights(self, w):
         """
         Arguments:
@@ -44,7 +40,7 @@ class Trainer():
         # create federation members - maybe replace federation class with this trainer
         # trainer should act as modelwrapper with all the training args and directly implement trianing loop
         # might not need to save local models as we use global aggregation
-        
+
         center_data = [Subset(train, list(dict_center_idxs[k])) for k in dict_center_idxs.keys()]
         center_step = [0 for i in range(len(center_data))]
 
@@ -63,12 +59,18 @@ class Trainer():
 
                 for l_epoch in tqdm(range(self.local_epochs)):
                     train_loader = DataLoader(c_data, batch_size=self.batch_size, shuffle=True, num_workers=self.num_workers)
-                    c_loss = 0
                     for data in train_loader:
                         batch_c_loss = center.local_step(data)
                         self.writer.add_scalar(f"Loss {c_id} - train", batch_c_loss, center_step[c_id])
                         center_step[c_id] += 1
-            
+
+                    c_val_loss = 0
+                    val_loader = DataLoader(center_val_data[c_id], batch_size=self.batch_size, shuffle=False, num_workers=self.num_workers)
+                    for data in val_loader:
+                        c_val_loss += center.local_test_step(data)
+                    c_val_loss = c_val_loss / len(val_loader)
+                    self.writer.add_scalar(f"Loss {c_id} - val", c_val_loss, center_step[c_id])
+
                 model_dicts.append(copy.deepcopy(center.get_model_dict())) 
 
                 del center
@@ -78,7 +80,6 @@ class Trainer():
 
         save_to = os.path.join(self.writer.log_dir, f"model-{g_epoch}.pt")
         torch.save(model.state_dict(), save_to)
-
 
 class Center():
     def __init__(self, model, optimizer, lr, device) -> None:
@@ -128,20 +129,6 @@ class Center():
         
         self.model.train()
         return loss
-
-    def get_loss(self, model, validate=True):
-        model.to(self.device)
-        model.eval()
-        loader = self.validloader if validate else self.testloader
-        batch_loss = []
-        for batch_idx, data in enumerate(loader):
-            features, durations, events = data[0], data[1], data[2]
-            features, durations, events = features.to(self.device), durations.to(self.device), events.to(self.device)
-            phi = model(features)
-            loss = self.loss(phi, durations, events)
-            batch_loss.append(loss.item())
-        model.train()
-        return sum(batch_loss) / len(batch_loss)
 
 '''
 class Federation():
