@@ -1,10 +1,14 @@
 dataset: gbsg
 model_type: 'CoxPH'
 num_durations: 40
-num_centers: 4
+num_centers: 1
 epochs: 10
-local_epochs: 5
+local_epochs: 1
 batch_size: 32
+optimizer: SGD
+lr: 1.0e-4
+num_workers: 1
+device: 'cpu'
 stratify: 'iid'
 out_dir: 'runs_test'
 seed: 0
