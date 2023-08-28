@@ -253,10 +253,6 @@ def main(args):
     #             print(f'Avg concordance: {sum(scores) / len(scores)}, Integrated Brier: {sum(briers) / len(briers)}', file=f)
 
 
-
-
-
-
 if __name__ == "__main__":
     args = parse_args()
     main(args)
