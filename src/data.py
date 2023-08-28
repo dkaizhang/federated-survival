@@ -76,6 +76,16 @@ def load_data(dataset, num_durations, seed):
 
     return train, val, test
 
+def get_min_max_durations(dataset, seed):
+
+    train_data, val_data, test_data = load_raw_data(dataset, seed)
+
+    min = train_data.durations.min()
+    max = train_data.durations.max()
+
+    return min, max
+
+
 def get_standardiser(dataset):
 
     if dataset == 'metabric':
