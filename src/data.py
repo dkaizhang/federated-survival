@@ -71,7 +71,7 @@ def load_data(dataset, num_durations, seed):
 
     # using transformed labels for training only
     train = TabularSurvivalDataset(features=train_x_trans, labels=train_y_trans)
-    val = TabularSurvivalDataset(features=val_x_trans, labels=(val_data.duration.values, val_data.event.values))
+    val = TabularSurvivalDataset(features=val_x_trans, labels=val_y_trans)
     test = TabularSurvivalDataset(features=test_x_trans, labels=(test_data.duration.values, test_data.event.values))
 
     return train, val, test
