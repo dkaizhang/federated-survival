@@ -76,12 +76,19 @@ def load_data(dataset, num_durations, seed):
 
     return train, val, test
 
-def get_min_max_durations(dataset, seed):
+def get_min_max_durations(dataset, split, seed):
 
     train_data, val_data, test_data = load_raw_data(dataset, seed)
 
-    min = train_data.durations.min()
-    max = train_data.durations.max()
+    if split == 'train':
+        data = train_data
+    elif split == 'val':
+        data = val_data
+    else:
+        data = test_data
+
+    min = data.duration.min()
+    max = data.duration.max()
 
     return min, max
 
