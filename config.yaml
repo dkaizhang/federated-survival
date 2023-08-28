@@ -1,0 +1,10 @@
+dataset: gbsg
+model_type: 'CoxPH'
+num_durations: 40
+num_centers: 4
+epochs: 10
+local_epochs: 5
+batch_size: 32
+stratify: 'iid'
+out_dir: 'runs_test'
+seed: 0
