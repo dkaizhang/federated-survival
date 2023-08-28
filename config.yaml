@@ -12,3 +12,4 @@ device: 'cpu'
 stratify: 'iid'
 out_dir: 'runs_test'
 seed: 0
+eval_path: 'path'
