@@ -17,6 +17,7 @@ def load_model(model_type, dim_in, dim_out, model_path=None):
     if model_path is not None:
         net.load_state_dict(torch.load(model_path))
 
+    return net
 
 class DenseBlock(nn.Module):
     def __init__(self, dim_in, dim_out, bias=True, batch_norm=True, dropout=0, activation=nn.ReLU, 
