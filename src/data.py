@@ -143,12 +143,12 @@ def data_transform(data, all_cols, x_mapper, discretiser, fit_transform=True):
     else:
         x_trans = x_mapper.transform(x).astype('float32')
 
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore")
-        if fit_transform:
-            y_trans = discretiser.fit_transform(*y)
-        else:
-            y_trans = discretiser.transform(*y)   
+    # with warnings.catch_warnings():
+    #     warnings.simplefilter("ignore")
+    if fit_transform:
+        y_trans = discretiser.fit_transform(*y)
+    else:
+        y_trans = discretiser.transform(*y)   
 
     return x_trans, y_trans
 
