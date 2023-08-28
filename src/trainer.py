@@ -45,10 +45,10 @@ class Trainer():
         # trainer should act as modelwrapper with all the training args and directly implement trianing loop
         # might not need to save local models as we use global aggregation
         
-        center_data = [Subset(train, idxs) for idxs in dict_center_idxs]
+        center_data = [Subset(train, list(dict_center_idxs[k])) for k in dict_center_idxs.keys()]
         center_step = [0 for i in range(len(center_data))]
 
-        center_val_data = [Subset(val, idxs) for idxs in val_dict_center_idxs]
+        center_val_data = [Subset(val, list(val_dict_center_idxs[k])) for k in val_dict_center_idxs.keys()]
 
         for g_epoch in range(self.epochs):
 
@@ -56,28 +56,33 @@ class Trainer():
 
             model_dicts = []
             for c_id, c_data in enumerate(center_data):
+
+                print(f"---Center {1+c_id} / {len(center_data)}")
                 local_model = copy.deepcopy(model)
                 center = Center(model=local_model, optimizer=self.optimizer, lr=self.lr, device=self.device)
-                train_loader = DataLoader(c_data, batch_size=self.batch_size, shuffle=True, num_workers=self.num_workers)
 
                 for l_epoch in tqdm(range(self.local_epochs)):
+                    train_loader = DataLoader(c_data, batch_size=self.batch_size, shuffle=True, num_workers=self.num_workers)
                     c_loss = 0
                     for data in train_loader:
                         batch_c_loss = center.local_step(data)
                         self.writer.add_scalar(f"Loss {c_id} - train", batch_c_loss, center_step[c_id])
                         center_step[c_id] += 1
             
-                model_dicts.append(Center.get_model_dict()) 
+                model_dicts.append(copy.deepcopy(center.get_model_dict())) 
 
-            model = self.average_weights(model_dicts)
+                del center
+
+            weights = self.average_weights(model_dicts)
+            model.load_state_dict(weights)
 
         save_to = os.path.join(self.writer.log_dir, f"model-{g_epoch}.pt")
         torch.save(model.state_dict(), save_to)
 
 
 class Center():
-    def __init__(self, id, model, optimizer, lr, device) -> None:
-        self.id = id
+    def __init__(self, model, optimizer, lr, device) -> None:
+
         self.model = model
         if optimizer == 'Adam':
             self.optimizer = torch.optim.Adam(self.model.parameters(), lr=lr)
