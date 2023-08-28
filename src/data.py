@@ -2,10 +2,10 @@ import numpy as np
 import torch
 import warnings
 
-from Data.data_sim import SimStudyNonLinearNonPH
-from Data.data_sim import SimStudyNonLinearNonPHSquared
-from Data.data_sim import SimStudyNonLinearNonPHCubed
-from Data.data_sim import SimStudyNonLinearNonPHAll
+# from Data.data_sim import SimStudyNonLinearNonPH
+# from Data.data_sim import SimStudyNonLinearNonPHSquared
+# from Data.data_sim import SimStudyNonLinearNonPHCubed
+# from Data.data_sim import SimStudyNonLinearNonPHAll
 from pycox import datasets
 from src.discretiser import Discretiser
 from sklearn.compose import ColumnTransformer
@@ -44,13 +44,13 @@ def load_raw_data(dataset, seed):
         data = datasets.gbsg.read_df()
     elif dataset == 'rr_nl_nhp':
         data = datasets.rr_nl_nhp.read_df()
-    elif dataset == 'simulated':
-        n = 4000
-        sims = [SimStudyNonLinearNonPH(), SimStudyNonLinearNonPHSquared(), SimStudyNonLinearNonPHCubed(), SimStudyNonLinearNonPHAll()]
-        sim = sims[0]
-        data = sim.simulate(n)
-        data = sim.dict2df(data, True)
-        data = data.drop(columns=['duration_true','event_true','censoring_true']) 
+    # elif dataset == 'simulated':
+    #     n = 4000
+    #     sims = [SimStudyNonLinearNonPH(), SimStudyNonLinearNonPHSquared(), SimStudyNonLinearNonPHCubed(), SimStudyNonLinearNonPHAll()]
+    #     sim = sims[0]
+    #     data = sim.simulate(n)
+    #     data = sim.dict2df(data, True)
+    #     data = data.drop(columns=['duration_true','event_true','censoring_true']) 
 
     data = data.astype({'event' : int})
     train_data, test_data = train_test_split(data, test_split=0.1, seed=seed)
