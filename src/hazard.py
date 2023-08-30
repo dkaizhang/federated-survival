@@ -9,15 +9,15 @@ def predict_hazard(model, data, device):
     durations = durations.to(device)
     events = events.to(device)
 
-    hazard = model(x).sigmoid()         
+    hazard = model(x).sigmoid()   
     model.train()
     return hazard
 
 def predict_surv(model, data, device):
-    hazard = predict_hazard(model, data, device)
-    surv = (1 - hazard).log().cumsum(1).exp()
-    return surv.cpu().detach().numpy()
+    hazard = predict_hazard(model, data, device) # size batch x num_durations
+    surv = (1 - hazard).log().cumsum(1).exp() # size batch x num_durations
+    return surv.cpu().detach()
 
 def predict_surv_df(model, data, cuts, device):
-    surv = predict_surv(model, data)
+    surv = predict_surv(model, data, device)
     return pd.DataFrame(surv.transpose(), cuts)
