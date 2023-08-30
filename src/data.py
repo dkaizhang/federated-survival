@@ -12,9 +12,6 @@ from sklearn.compose import ColumnTransformer
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.preprocessing import StandardScaler
 
-# TODO refac this out
-rng = np.random.default_rng(123)
-
 class TabularSurvivalDataset(torch.utils.data.Dataset):
     def __init__(self, features, labels):
         self.features = features
@@ -161,7 +158,7 @@ def stratify_data(dataset, split, strategy, num_centers, seed):
         raw_data = raw_val_data
 
     if strategy == 'iid':
-        dict_center_idxs = sample_iid(raw_data, num_centers)
+        dict_center_idxs = sample_iid(raw_data, num_centers, seed)
     elif strategy == 'labels':
         # using raw labels instead of discretised labels
         dict_center_idxs = sample_by_quantiles(raw_data, "duration", num_centers)
@@ -193,7 +190,7 @@ def train_val_split(df, t_index, v_index, feature_headers):
     return x_train, y_train, x_val, y_val
 
 
-def sample_iid(data, num_centers, start_center = 0):
+def sample_iid(data, num_centers, seed, start_center = 0):
     """
     Randomly split data evenly across each centre
     Arguments:
@@ -202,6 +199,8 @@ def sample_iid(data, num_centers, start_center = 0):
     Returns:
     Dict with centre_id : indices of data assigned to centre
     """
+    rng = np.random.default_rng(seed)
+
     num_items = int(len(data)/num_centers)
     # all_idxs doesn't look at the actual existing indices in data
     dict_center_idxs, all_idxs = {}, [i for i in range(len(data))]
