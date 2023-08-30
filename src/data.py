@@ -62,9 +62,11 @@ def load_data(dataset, num_durations, seed):
     all_cols, x_mapper = get_standardiser(dataset)
     discretiser = Discretiser(num_durations, scheme='km') 
 
-    train_x_trans, train_y_trans = data_transform(train_data, all_cols, x_mapper, discretiser, fit_transform=True)
-    val_x_trans, val_y_trans = data_transform(val_data, all_cols, x_mapper, discretiser, fit_transform=False)
-    test_x_trans, test_y_trans = data_transform(test_data, all_cols, x_mapper, discretiser, fit_transform=False)
+    x_mapper, discretiser = fit_transformers(train_data, all_cols, x_mapper, discretiser)
+
+    train_x_trans, train_y_trans = data_transform(train_data, all_cols, x_mapper, discretiser)
+    val_x_trans, val_y_trans = data_transform(val_data, all_cols, x_mapper, discretiser)
+    test_x_trans, _ = data_transform(test_data, all_cols, x_mapper, discretiser)
 
     # using transformed labels for training only
     train = TabularSurvivalDataset(features=train_x_trans, labels=train_y_trans)
@@ -119,33 +121,35 @@ def get_standardiser(dataset):
     return all_cols, x_mapper
 
 
+def fit_transformers(data, all_cols, x_mapper, discretiser):
+    
+    x = data[all_cols]
+    y = (data.duration.values, data.event.values)
+    x_mapper = x_mapper.fit(x).astype('float32')
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        discretiser = discretiser.fit(*y)
+
+    return x_mapper, discretiser
+
 """
 Argument:
 data - DataFrame of features and labels
 all_cols - List of all features
 x_mapper - ColumnTransformer for all features
 discretiser - Discretiser to be applied to y
-fit_transform - for x_mapper and discretiser on x and y respectively 
 Returns:
 x_trans - 
 y_trans - tuple of (discretised durations, events)
 """
-def data_transform(data, all_cols, x_mapper, discretiser, fit_transform=True):
+def data_transform(data, all_cols, x_mapper, discretiser):
 
     x = data[all_cols]
     y = (data.duration.values, data.event.values)
 
-    if fit_transform:
-        x_trans = x_mapper.fit_transform(x).astype('float32')
-    else:
-        x_trans = x_mapper.transform(x).astype('float32')
-
-    # with warnings.catch_warnings():
-    #     warnings.simplefilter("ignore")
-    if fit_transform:
-        y_trans = discretiser.fit_transform(*y)
-    else:
-        y_trans = discretiser.transform(*y)   
+    x_trans = x_mapper.transform(x).astype('float32')
+    y_trans = discretiser.transform(*y)   
 
     return x_trans, y_trans
 
