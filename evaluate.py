@@ -5,7 +5,7 @@ import yaml
 
 from argparse import ArgumentParser
 from pycox.evaluation import EvalSurv
-from src.data import load_data, load_raw_data, get_min_max_durations
+from src.data import load_data, load_raw_data, get_min_max_durations, fit_discretiser
 from src.discretiser import Discretiser
 from src.hazard import predict_surv
 from src.interpolate import surv_const_pdf_df
@@ -22,10 +22,11 @@ def main(args):
     with open(args.config, "r") as f:
         config = yaml.safe_load(f)
 
-    discretiser = Discretiser(config['num_durations'], scheme='km')
-
     _, _, test = load_data(dataset=config['dataset'], num_durations=config['num_durations'], seed=config['seed'])
-    _, _, raw_test = load_raw_data(dataset=config['dataset'], seed=config['seed'])
+    raw_train, _, raw_test = load_raw_data(dataset=config['dataset'], seed=config['seed'])
+
+    discretiser = Discretiser(config['num_durations'], scheme='km')
+    discretiser = fit_discretiser(discretiser, raw_train)
 
     loader = DataLoader(test, batch_size=config['batch_size'], shuffle=False)
 
