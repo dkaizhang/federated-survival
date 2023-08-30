@@ -62,7 +62,8 @@ def load_data(dataset, num_durations, seed):
     all_cols, x_mapper = get_standardiser(dataset)
     discretiser = Discretiser(num_durations, scheme='km') 
 
-    x_mapper, discretiser = fit_transformers(train_data, all_cols, x_mapper, discretiser)
+    x_mapper = fit_xmapper(x_mapper, train_data, all_cols)
+    discretiser = fit_discretiser(discretiser, train_data)
 
     train_x_trans, train_y_trans = data_transform(train_data, all_cols, x_mapper, discretiser)
     val_x_trans, val_y_trans = data_transform(val_data, all_cols, x_mapper, discretiser)
@@ -121,17 +122,22 @@ def get_standardiser(dataset):
     return all_cols, x_mapper
 
 
-def fit_transformers(data, all_cols, x_mapper, discretiser):
-    
-    x = data[all_cols]
+def fit_discretiser(discretiser, data):
+
     y = (data.duration.values, data.event.values)
-    x_mapper = x_mapper.fit(x).astype('float32')
 
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
         discretiser = discretiser.fit(*y)
 
-    return x_mapper, discretiser
+    return discretiser
+
+def fit_xmapper(x_mapper, data, all_cols):
+    
+    x = data[all_cols]
+    x_mapper = x_mapper.fit(x).astype('float32')
+
+    return x_mapper
 
 """
 Argument:
