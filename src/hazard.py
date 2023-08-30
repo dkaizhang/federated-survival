@@ -13,11 +13,11 @@ def predict_hazard(model, data, device):
     model.train()
     return hazard
 
-def predict_surv(model, data):
-    hazard = predict_hazard(model, data)
+def predict_surv(model, data, device):
+    hazard = predict_hazard(model, data, device)
     surv = (1 - hazard).log().cumsum(1).exp()
     return surv.cpu().detach().numpy()
 
-def predict_surv_df(model, data, cuts):
+def predict_surv_df(model, data, cuts, device):
     surv = predict_surv(model, data)
     return pd.DataFrame(surv.transpose(), cuts)
